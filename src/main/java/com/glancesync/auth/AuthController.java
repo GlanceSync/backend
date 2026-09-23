@@ -32,7 +32,7 @@ public class AuthController {
             throw new ApiException(HttpStatus.BAD_REQUEST, "A request body is required.");
         }
         User user = authService.register(body.username(), body.password(), body.confirmPassword());
-        return HttpResponse.created(new Dtos.UserResponse(user.id(), user.username()));
+        return HttpResponse.created(new Dtos.UserResponse(user.id(), user.username(), user.avatarUrl()));
     }
 
     @Post(value = "/login", consumes = MediaType.APPLICATION_JSON)
@@ -42,7 +42,7 @@ public class AuthController {
         }
         User user = authService.login(body.username(), body.password());
         String token = sessionService.startSession(user.id());
-        return HttpResponse.ok(new Dtos.UserResponse(user.id(), user.username()))
+        return HttpResponse.ok(new Dtos.UserResponse(user.id(), user.username(), user.avatarUrl()))
                 .cookie(sessionService.buildCookie(token));
     }
 
@@ -64,7 +64,7 @@ public class AuthController {
                 .findCookie(SessionService.COOKIE_NAME)
                 .flatMap(cookie -> sessionService.resolveUserId(cookie.getValue()))
                 .flatMap(userDao::findById)
-                .map(found -> new Dtos.UserResponse(found.id(), found.username()))
+                .map(found -> new Dtos.UserResponse(found.id(), found.username(), found.avatarUrl()))
                 .orElse(null);
         return new Dtos.SessionResponse(user);
     }

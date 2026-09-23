@@ -263,8 +263,12 @@ public class RealtimeSocket {
 
     private RealtimeMessages.CallSignal signal(String type, String callId, long fromUserId,
                                                String mode, java.util.Map<String, Object> payload) {
-        String fromUsername = userDao.findById(fromUserId).map(user -> user.username()).orElse(null);
-        return new RealtimeMessages.CallSignal(type, callId, fromUserId, fromUsername, mode, payload);
+        // Who is calling, as the callee's screen shows them: name and photo.
+        var from = userDao.findById(fromUserId);
+        return new RealtimeMessages.CallSignal(type, callId, fromUserId,
+                from.map(user -> user.username()).orElse(null),
+                from.map(user -> user.avatarUrl()).orElse(null),
+                mode, payload);
     }
 
     private void send(long userId, Object message) {

@@ -105,7 +105,7 @@ public final class RealtimeMessages {
      */
     @Serdeable
     public record CallSignal(String type, String callId, long fromUserId, String fromUsername,
-                             String mode, Map<String, Object> payload) {
+                             String fromAvatarUrl, String mode, Map<String, Object> payload) {
     }
 
     /** Sent to the caller once a call id exists, so both ends agree on it. */

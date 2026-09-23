@@ -21,7 +21,7 @@ public class UserDao {
 
     public Optional<User> findByUsername(String username) {
         return database.queryOne(
-                "SELECT id, username, password_hash, created_at, last_seen_at "
+                "SELECT id, username, password_hash, created_at, last_seen_at, avatar_updated_at "
                         + "FROM users WHERE LOWER(username) = LOWER(?)",
                 UserDao::mapUser,
                 username);
@@ -29,7 +29,7 @@ public class UserDao {
 
     public Optional<User> findById(long id) {
         return database.queryOne(
-                "SELECT id, username, password_hash, created_at, last_seen_at "
+                "SELECT id, username, password_hash, created_at, last_seen_at, avatar_updated_at "
                         + "FROM users WHERE id = ?",
                 UserDao::mapUser,
                 id);
@@ -51,7 +51,7 @@ public class UserDao {
     /** Everyone except the caller, newest sign-ups last. */
     public List<User> findAllExcept(long excludedUserId) {
         return database.query(
-                "SELECT id, username, password_hash, created_at, last_seen_at "
+                "SELECT id, username, password_hash, created_at, last_seen_at, avatar_updated_at "
                         + "FROM users WHERE id <> ? ORDER BY LOWER(username)",
                 UserDao::mapUser,
                 excludedUserId);
@@ -67,7 +67,8 @@ public class UserDao {
                 rs.getString("username"),
                 rs.getString("password_hash"),
                 toInstant(rs.getTimestamp("created_at")),
-                toInstant(rs.getTimestamp("last_seen_at")));
+                toInstant(rs.getTimestamp("last_seen_at")),
+                toInstant(rs.getTimestamp("avatar_updated_at")));
     }
 
     private static Instant toInstant(Timestamp timestamp) {

@@ -18,9 +18,12 @@ public final class Dtos {
     public record LoginRequest(String username, String password) {
     }
 
-    /** What the client is allowed to know about a user. Never includes the password hash. */
+    /**
+     * What the client is allowed to know about a user. Never includes the password hash.
+     * {@code avatarUrl} is null until they upload a photo.
+     */
     @Serdeable
-    public record UserResponse(long id, String username) {
+    public record UserResponse(long id, String username, String avatarUrl) {
     }
 
     /**
@@ -28,7 +31,7 @@ public final class Dtos {
      * preview of the last thing said, so the list reads like a messenger.
      */
     @Serdeable
-    public record PersonResponse(long id, String username, boolean online, Instant lastSeenAt,
+    public record PersonResponse(long id, String username, String avatarUrl, boolean online, Instant lastSeenAt,
                                  String lastMessage, Instant lastMessageAt, Boolean lastMessageMine,
                                  boolean blocked, boolean blockedByThem) {
     }

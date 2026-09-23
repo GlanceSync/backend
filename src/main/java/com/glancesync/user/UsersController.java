@@ -57,6 +57,7 @@ public class UsersController {
                     return new Dtos.PersonResponse(
                             user.id(),
                             user.username(),
+                            user.avatarUrl(),
                             presence.isOnline(user.id()),
                             user.lastSeenAt(),
                             last == null ? null : last.body(),

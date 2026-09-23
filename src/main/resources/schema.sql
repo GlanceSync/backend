@@ -101,3 +101,14 @@ CREATE TABLE IF NOT EXISTS blocks (
 
 -- Looked up in the other direction too, to answer "has this person blocked me".
 CREATE INDEX IF NOT EXISTS blocks_blocked_idx ON blocks (blocked_id);
+
+-- Profile photos. Kept out of `users` so listing people never drags image bytes along;
+-- `users.avatar_updated_at` is enough to know one exists and to version its URL.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_updated_at TIMESTAMPTZ;
+
+CREATE TABLE IF NOT EXISTS user_avatars (
+    user_id      BIGINT      PRIMARY KEY REFERENCES users (id) ON DELETE CASCADE,
+    content_type VARCHAR(20) NOT NULL,
+    data         BYTEA       NOT NULL,
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
