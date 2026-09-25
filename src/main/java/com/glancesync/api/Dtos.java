@@ -3,6 +3,7 @@ package com.glancesync.api;
 import io.micronaut.serde.annotation.Serdeable;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 public final class Dtos {
@@ -34,6 +35,15 @@ public final class Dtos {
     public record PersonResponse(long id, String username, String avatarUrl, boolean online, Instant lastSeenAt,
                                  String lastMessage, Instant lastMessageAt, Boolean lastMessageMine,
                                  boolean blocked, boolean blockedByThem) {
+    }
+
+    /** One entry of RTCConfiguration.iceServers; STUN entries carry no credentials. */
+    @Serdeable
+    public record IceServer(List<String> urls, String username, String credential) {
+    }
+
+    @Serdeable
+    public record IceServersResponse(List<IceServer> iceServers) {
     }
 
     /** Answer to "who am I". A null user simply means nobody is signed in. */
