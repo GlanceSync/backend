@@ -1,0 +1,24 @@
+# Install once on the VPS:
+#   sudo cp glancesync-backend.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now glancesync-backend
+#
+# Replace "ubuntu" below if the deploy user is named differently.
+
+[Unit]
+Description=GlanceSync backend (Micronaut)
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+User=ubuntu
+# The app reads its .env from the working directory, so credentials never reach
+# the unit file or the repository.
+WorkingDirectory=/home/ubuntu/glancesync-backend
+ExecStart=/usr/bin/java -Xms128m -Xmx512m -jar /home/ubuntu/glancesync-backend/app.jar
+SuccessExitStatus=143
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

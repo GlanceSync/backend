@@ -1,0 +1,84 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [ feat/realtime-messaging ]
+    paths-ignore:
+      - '**.md'
+  workflow_dispatch: {}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      REMOTE_DIR: /home/${{ secrets.SSH_USERNAME }}/glancesync-backend
+      SERVICE: glancesync-backend.service
+      HEALTH_URL: http://localhost:8083/api/auth/me
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Build jar with Maven
+        run: ./mvnw -B clean package -DskipTests
+
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
+      - name: Trust remote host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Keep the running jar as a rollback copy
+        env:
+          SSHPASS: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          sshpass -e ssh "${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}" "
+            mkdir -p ${{ env.REMOTE_DIR }}
+            if [ -f ${{ env.REMOTE_DIR }}/app.jar ]; then
+              cp ${{ env.REMOTE_DIR }}/app.jar ${{ env.REMOTE_DIR }}/previous.jar
+            fi
+          "
+
+      - name: Upload new jar
+        env:
+          SSHPASS: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          # Micronaut also leaves the unshaded *.jar.original next to the runnable jar.
+          JAR_FILE=$(find target -maxdepth 1 -name '*.jar' ! -name '*.original' | head -n 1)
+          echo "Deploying $JAR_FILE"
+          sshpass -e scp "$JAR_FILE" "${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:${{ env.REMOTE_DIR }}/app.jar"
+
+      - name: Restart, health check, roll back on failure
+        env:
+          SSHPASS: ${{ secrets.SSH_PASSWORD }}
+        run: |
+          sshpass -e ssh "${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}" "
+            set -e
+            sudo systemctl restart ${{ env.SERVICE }}
+
+            # Give the JVM time to come up before judging it.
+            for i in \$(seq 1 20); do
+              sleep 3
+              if curl -sf -o /dev/null ${{ env.HEALTH_URL }}; then
+                echo 'backend: health check passed'
+                rm -f ${{ env.REMOTE_DIR }}/previous.jar
+                exit 0
+              fi
+            done
+
+            echo 'backend: health check FAILED - rolling back'
+            if [ -f ${{ env.REMOTE_DIR }}/previous.jar ]; then
+              mv ${{ env.REMOTE_DIR }}/previous.jar ${{ env.REMOTE_DIR }}/app.jar
+              sudo systemctl restart ${{ env.SERVICE }}
+              echo 'backend: rolled back to the previous jar'
+            fi
+            exit 1
+          "
