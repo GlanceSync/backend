@@ -2,7 +2,7 @@ package com.glancesync.modules.user.controller;
 
 import java.util.UUID;
 import com.glancesync.common.exception.ApiException;
-import com.glancesync.modules.security.filter.AuthenticationFilter;
+import com.glancesync.modules.security.filter.JwtAuthenticationFilter;
 import com.glancesync.modules.user.dto.UserResponse;
 import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.AvatarDao;
@@ -109,7 +109,7 @@ public class AvatarController {
     }
 
     private UUID selfId(HttpRequest<?> request) {
-        return request.getAttribute(AuthenticationFilter.USER_ID_ATTRIBUTE, UUID.class)
+        return request.getAttribute(JwtAuthenticationFilter.USER_ID_ATTRIBUTE, UUID.class)
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "You must be signed in."));
     }
 }

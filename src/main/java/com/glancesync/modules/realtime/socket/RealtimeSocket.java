@@ -2,7 +2,6 @@ package com.glancesync.modules.realtime.socket;
 
 import java.util.UUID;
 import com.glancesync.common.exception.ApiException;
-import com.glancesync.modules.auth.service.SessionService;
 import com.glancesync.modules.block.service.BlockService;
 import com.glancesync.modules.call.service.CallLogService;
 import com.glancesync.modules.call.service.CallRegistry;
@@ -12,6 +11,7 @@ import com.glancesync.modules.notification.service.NotificationService;
 import com.glancesync.modules.realtime.dto.RealtimeMessages;
 import com.glancesync.modules.realtime.service.PresenceRegistry;
 import com.glancesync.modules.realtime.service.RealtimePush;
+import com.glancesync.modules.security.service.JwtService;
 import com.glancesync.modules.user.repo.UserDao;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.json.JsonMapper;
@@ -41,7 +41,7 @@ public class RealtimeSocket {
     private static final Logger LOG = LoggerFactory.getLogger(RealtimeSocket.class);
     private static final String USER_ID = "userId";
 
-    private final SessionService sessionService;
+    private final JwtService jwtService;
     private final PresenceRegistry presence;
     private final UserDao userDao;
     private final ChatService chatService;
@@ -52,11 +52,11 @@ public class RealtimeSocket {
     private final CallLogService callLog;
     private final BlockService blocks;
 
-    public RealtimeSocket(SessionService sessionService, PresenceRegistry presence,
+    public RealtimeSocket(JwtService jwtService, PresenceRegistry presence,
                           UserDao userDao, ChatService chatService, JsonMapper jsonMapper,
                           RealtimePush push, NotificationService notifications,
                           CallRegistry calls, CallLogService callLog, BlockService blocks) {
-        this.sessionService = sessionService;
+        this.jwtService = jwtService;
         this.presence = presence;
         this.userDao = userDao;
         this.chatService = chatService;
@@ -68,11 +68,15 @@ public class RealtimeSocket {
         this.blocks = blocks;
     }
 
+    /**
+     * The browser WebSocket API cannot set headers, so the access token comes in the
+     * query string: /ws?token=... It is short-lived, and only checked at the handshake.
+     */
     @OnOpen
     public void onOpen(WebSocketSession session, HttpRequest<?> request) {
-        UUID userId = request.getCookies()
-                .findCookie(SessionService.COOKIE_NAME)
-                .flatMap(cookie -> sessionService.resolveUserId(cookie.getValue()))
+        UUID userId = request.getParameters()
+                .getFirst("token")
+                .flatMap(jwtService::parseAccessToken)
                 .orElse(null);
 
         if (userId == null) {

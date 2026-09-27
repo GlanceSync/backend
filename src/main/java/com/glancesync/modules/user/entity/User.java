@@ -6,15 +6,19 @@ import java.time.Instant;
 public record User(
     UUID id,
     String username,
+    String email,
+    String firstName,
+    String lastName,
     String passwordHash,
+    Instant emailVerifiedAt,
     Instant createdAt,
     Instant lastSeenAt,
     Instant avatarUpdatedAt) {
 
-    /**
-     * Where the profile photo is served, or null when there is none. The version in the
-     * query string changes with every upload, so the image can be cached indefinitely.
-     */
+    public boolean emailVerified() {
+        return emailVerifiedAt != null;
+    }
+
     public String avatarUrl() {
         return avatarUrl(id, avatarUpdatedAt);
     }

@@ -2,7 +2,7 @@ package com.glancesync.modules.call.controller;
 
 import java.util.UUID;
 import com.glancesync.common.exception.ApiException;
-import com.glancesync.modules.security.filter.AuthenticationFilter;
+import com.glancesync.modules.security.filter.JwtAuthenticationFilter;
 import com.glancesync.modules.call.dto.IceServer;
 import com.glancesync.modules.call.dto.IceServersResponse;
 import io.micronaut.context.annotation.Value;
@@ -54,7 +54,7 @@ public class CallsController {
 
     @Get("/ice-servers")
     public IceServersResponse iceServers(HttpRequest<?> request) {
-        UUID selfId = request.getAttribute(AuthenticationFilter.USER_ID_ATTRIBUTE, UUID.class)
+        UUID selfId = request.getAttribute(JwtAuthenticationFilter.USER_ID_ATTRIBUTE, UUID.class)
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "You must be signed in."));
 
         List<IceServer> servers = new ArrayList<>();

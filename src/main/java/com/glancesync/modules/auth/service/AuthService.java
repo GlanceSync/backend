@@ -2,12 +2,14 @@ package com.glancesync.modules.auth.service;
 
 import java.util.UUID;
 import com.glancesync.common.exception.ApiException;
+import com.glancesync.modules.auth.dto.RegisterRequest;
 import com.glancesync.modules.security.service.PasswordHasher;
 import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.UserDao;
 import io.micronaut.http.HttpStatus;
 import jakarta.inject.Singleton;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Singleton
@@ -15,21 +17,48 @@ public class AuthService {
 
     private final UserDao userDao;
     private final PasswordHasher passwordHasher;
+    private final CredentialRules rules;
+    private final EmailVerificationService emailVerification;
 
-    public AuthService(UserDao userDao, PasswordHasher passwordHasher) {
+    public AuthService(UserDao userDao, PasswordHasher passwordHasher, CredentialRules rules,
+                       EmailVerificationService emailVerification) {
         this.userDao = userDao;
         this.passwordHasher = passwordHasher;
+        this.rules = rules;
+        this.emailVerification = emailVerification;
     }
 
-    public User register(String username, String password, String confirmPassword) {
-        if (userDao.usernameExists(username)) {
-            throw new ApiException(HttpStatus.CONFLICT, "That username is already taken.",
-                    Map.of("username", "That username is already taken."));
+    /** Creates an unverified account and emails the link that activates it. */
+    public User register(RegisterRequest raw) {
+        RegisterRequest request = new RegisterRequest(trim(raw.email()), raw.username(),
+                trim(raw.firstName()), trim(raw.lastName()), raw.password(), raw.confirmPassword());
+
+        Map<String, String> errors = rules.validateRegistration(request);
+        if (!errors.isEmpty()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Please correct the highlighted fields.", errors);
         }
 
-        UUID id = userDao.create(username, passwordHasher.hash(password));
-        return userDao.findById(id).orElseThrow(
+        Map<String, String> taken = new HashMap<>();
+        if (userDao.usernameExists(request.username())) {
+            taken.put("username", "That username is already taken.");
+        }
+        if (userDao.emailExists(request.email())) {
+            taken.put("email", "An account already uses that email address.");
+        }
+        if (!taken.isEmpty()) {
+            throw new ApiException(HttpStatus.CONFLICT, "Please correct the highlighted fields.", taken);
+        }
+
+        UUID id = userDao.create(request.username(), request.email(), request.firstName(),
+                request.lastName(), passwordHasher.hash(request.password()));
+        User user = userDao.findById(id).orElseThrow(
                 () -> new IllegalStateException("User vanished immediately after creation: " + id));
+        emailVerification.sendLink(user);
+        return user;
+    }
+
+    private static String trim(String value) {
+        return value == null ? null : value.trim();
     }
 
     /**
@@ -51,6 +80,12 @@ public class AuthService {
 
         if (!passwordHasher.verify(password, user.passwordHash())) {
             throw invalid;
+        }
+
+        // Only reached with the right password, so it reveals nothing to a guesser.
+        if (!user.emailVerified()) {
+            throw new ApiException(HttpStatus.FORBIDDEN,
+                    "Please confirm your email address first. We sent you a link when you signed up.");
         }
 
         userDao.touchLastSeen(user.id());

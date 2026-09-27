@@ -1,25 +1,42 @@
 -- GlanceSync schema. Applied on startup; every statement is idempotent.
 
 CREATE TABLE IF NOT EXISTS users (
-    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    username      VARCHAR(30) NOT NULL,
-    password_hash TEXT        NOT NULL,
-    created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
-    last_seen_at  TIMESTAMPTZ
+    id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username          VARCHAR(30)  NOT NULL,
+    email             VARCHAR(254) NOT NULL,
+    first_name        VARCHAR(50)  NOT NULL,
+    last_name         VARCHAR(50)  NOT NULL,
+    password_hash     TEXT         NOT NULL,
+    -- Null until the link in the verification email is followed; signing in needs it.
+    email_verified_at TIMESTAMPTZ,
+    created_at        TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    last_seen_at      TIMESTAMPTZ
 );
 
--- Usernames are unique case-insensitively, but stored with the casing the user chose.
+-- Usernames and emails are unique case-insensitively, but stored as the user typed them.
 CREATE UNIQUE INDEX IF NOT EXISTS users_username_lower_key ON users (LOWER(username));
+CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower_key    ON users (LOWER(email));
 
-CREATE TABLE IF NOT EXISTS sessions (
+-- One-time links sent by email. Only the SHA-256 of the token is stored.
+CREATE TABLE IF NOT EXISTS email_verifications (
     token_hash CHAR(64)    PRIMARY KEY,
     user_id    UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     expires_at TIMESTAMPTZ NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS sessions_user_id_idx    ON sessions (user_id);
-CREATE INDEX IF NOT EXISTS sessions_expires_at_idx ON sessions (expires_at);
+CREATE INDEX IF NOT EXISTS email_verifications_user_id_idx ON email_verifications (user_id);
+
+-- One row per signed-in device. The refresh token itself lives in an HttpOnly cookie;
+-- only its SHA-256 is stored, and each use swaps it for a new one.
+CREATE TABLE IF NOT EXISTS refresh_tokens (
+    token_hash CHAR(64)    PRIMARY KEY,
+    user_id    UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    expires_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS refresh_tokens_user_id_idx ON refresh_tokens (user_id);
 
 CREATE TABLE IF NOT EXISTS messages (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
