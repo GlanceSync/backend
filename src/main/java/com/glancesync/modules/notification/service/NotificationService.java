@@ -1,5 +1,6 @@
 package com.glancesync.modules.notification.service;
 
+import java.util.UUID;
 import com.glancesync.modules.notification.entity.Notification;
 import com.glancesync.modules.notification.repo.NotificationDao;
 import com.glancesync.modules.realtime.dto.RealtimeMessages;
@@ -34,28 +35,28 @@ public class NotificationService {
         this.push = push;
     }
 
-    public void notify(long userId, String type, Long actorId, String body) {
-        long id = notificationDao.insert(userId, type, actorId, body);
+    public void notify(UUID userId, String type, UUID actorId, String body) {
+        UUID id = notificationDao.insert(userId, type, actorId, body);
         notificationDao.findById(id).ifPresent(notification ->
                 push.toUser(userId, new RealtimeMessages.NotificationNew(notification)));
         pushUnreadCount(userId);
     }
 
-    public List<Notification> recent(long userId) {
+    public List<Notification> recent(UUID userId) {
         return notificationDao.recentFor(userId, RECENT_LIMIT);
     }
 
-    public int unreadCount(long userId) {
+    public int unreadCount(UUID userId) {
         return notificationDao.unreadCount(userId);
     }
 
-    public void markAllRead(long userId) {
+    public void markAllRead(UUID userId) {
         notificationDao.markAllRead(userId);
         pushUnreadCount(userId);
     }
 
     /** Keeps the bell in the header correct on every open tab. */
-    public void pushUnreadCount(long userId) {
+    public void pushUnreadCount(UUID userId) {
         push.toUser(userId, new RealtimeMessages.NotificationUnread(notificationDao.unreadCount(userId)));
     }
 }

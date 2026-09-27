@@ -1,5 +1,6 @@
 package com.glancesync.modules.event.service;
 
+import java.util.UUID;
 import com.glancesync.common.exception.ApiException;
 import com.glancesync.modules.event.entity.Event;
 import com.glancesync.modules.event.repo.EventDao;
@@ -32,13 +33,13 @@ public class EventService {
         this.notifications = notifications;
     }
 
-    public List<Event> forUser(long userId) {
+    public List<Event> forUser(UUID userId) {
         return eventDao.findForUser(userId);
     }
 
-    public Event propose(long organizerId, Long inviteeId, String rawTitle,
+    public Event propose(UUID organizerId, UUID inviteeId, String rawTitle,
                          String rawLocation, Instant startsAt) {
-        if (inviteeId == null || inviteeId == organizerId) {
+        if (inviteeId == null || inviteeId.equals(organizerId)) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Choose someone else to meet.");
         }
         if (userDao.findById(inviteeId).isEmpty()) {
@@ -67,7 +68,7 @@ public class EventService {
             throw new ApiException(HttpStatus.BAD_REQUEST, "That date is in the past.");
         }
 
-        long id = eventDao.insert(organizerId, inviteeId, title,
+        UUID id = eventDao.insert(organizerId, inviteeId, title,
                 location.isEmpty() ? null : location, startsAt);
         Event event = load(id);
 
@@ -77,9 +78,9 @@ public class EventService {
     }
 
     /** The invitee accepts or declines; only they may. */
-    public Event respond(long userId, long eventId, boolean accept) {
+    public Event respond(UUID userId, UUID eventId, boolean accept) {
         Event event = load(eventId);
-        if (event.inviteeId() != userId) {
+        if (!event.inviteeId().equals(userId)) {
             throw new ApiException(HttpStatus.FORBIDDEN, "Only the person invited can answer this.");
         }
         if (!PENDING.equals(event.status())) {
@@ -98,9 +99,9 @@ public class EventService {
     }
 
     /** Either participant may call the date off. */
-    public Event cancel(long userId, long eventId) {
+    public Event cancel(UUID userId, UUID eventId) {
         Event event = load(eventId);
-        if (event.organizerId() != userId && event.inviteeId() != userId) {
+        if (!event.organizerId().equals(userId) && !event.inviteeId().equals(userId)) {
             throw new ApiException(HttpStatus.FORBIDDEN, "This is not your date.");
         }
         if (CANCELLED.equals(event.status())) {
@@ -109,15 +110,15 @@ public class EventService {
 
         eventDao.updateStatus(eventId, CANCELLED);
 
-        long otherParty = event.organizerId() == userId ? event.inviteeId() : event.organizerId();
-        String actorName = event.organizerId() == userId
+        UUID otherParty = event.organizerId().equals(userId) ? event.inviteeId() : event.organizerId();
+        String actorName = event.organizerId().equals(userId)
                 ? event.organizerUsername() : event.inviteeUsername();
         notifications.notify(otherParty, NotificationService.TYPE_EVENT_CANCELLED, userId,
                 actorName + " cancelled \"" + event.title() + "\".");
         return load(eventId);
     }
 
-    private Event load(long eventId) {
+    private Event load(UUID eventId) {
         return eventDao.findById(eventId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "That date no longer exists."));
     }

@@ -1,5 +1,6 @@
 package com.glancesync.modules.realtime.service;
 
+import java.util.UUID;
 import io.micronaut.http.MediaType;
 import io.micronaut.websocket.WebSocketSession;
 import jakarta.inject.Singleton;
@@ -22,17 +23,17 @@ public class RealtimePush {
     }
 
     /** Sends to every tab or device belonging to one user. */
-    public void toUser(long userId, Object message) {
+    public void toUser(UUID userId, Object message) {
         for (WebSocketSession session : presence.sessionsFor(userId)) {
             toSession(session, message);
         }
     }
 
     /** Sends to everyone connected except the user the event is about. */
-    public void toEveryoneExcept(long exceptUserId, Object message) {
+    public void toEveryoneExcept(UUID exceptUserId, Object message) {
         for (WebSocketSession session : presence.allSessions()) {
-            Long target = session.get("userId", Long.class).orElse(null);
-            if (target != null && target != exceptUserId) {
+            UUID target = session.get("userId", UUID.class).orElse(null);
+            if (target != null && !target.equals(exceptUserId)) {
                 toSession(session, message);
             }
         }

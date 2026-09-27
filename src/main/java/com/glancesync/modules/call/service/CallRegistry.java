@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Singleton
 public class CallRegistry {
 
-    public record Call(String id, long callerId, long calleeId, String mode,
+    public record Call(String id, UUID callerId, UUID calleeId, String mode,
                        java.time.Instant startedAt, java.time.Instant answeredAt) {
 
         /** A call is answered once the callee has sent an answer. */
@@ -23,19 +23,19 @@ public class CallRegistry {
             return answeredAt != null;
         }
 
-        public boolean involves(long userId) {
-            return callerId == userId || calleeId == userId;
+        public boolean involves(UUID userId) {
+            return callerId.equals(userId) || calleeId.equals(userId);
         }
 
         /** The participant who is not {@code userId}. */
-        public long otherParty(long userId) {
-            return callerId == userId ? calleeId : callerId;
+        public UUID otherParty(UUID userId) {
+            return callerId.equals(userId) ? calleeId : callerId;
         }
     }
 
     private final Map<String, Call> callsById = new ConcurrentHashMap<>();
 
-    public Call start(long callerId, long calleeId, String mode) {
+    public Call start(UUID callerId, UUID calleeId, String mode) {
         // The id is generated here, never taken from the client, so it cannot be forged
         // to collide with someone else's call.
         Call call = new Call(UUID.randomUUID().toString(), callerId, calleeId, mode,
@@ -49,7 +49,7 @@ public class CallRegistry {
     }
 
     /** @return the call as it was, if it existed and the caller may act on it. */
-    public Optional<Call> findParticipating(String callId, long userId) {
+    public Optional<Call> findParticipating(String callId, UUID userId) {
         return find(callId).filter(call -> call.involves(userId));
     }
 
@@ -65,7 +65,7 @@ public class CallRegistry {
     }
 
     /** Ends every call a user was in, used when their last socket closes. */
-    public java.util.List<Call> endAllFor(long userId) {
+    public java.util.List<Call> endAllFor(UUID userId) {
         java.util.List<Call> ended = new java.util.ArrayList<>();
         callsById.values().removeIf(call -> {
             if (call.involves(userId)) {

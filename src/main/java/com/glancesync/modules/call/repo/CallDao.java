@@ -1,5 +1,6 @@
 package com.glancesync.modules.call.repo;
 
+import java.util.UUID;
 import com.glancesync.common.db.Database;
 import com.glancesync.modules.call.entity.CallRecord;
 import jakarta.inject.Singleton;
@@ -23,7 +24,7 @@ public class CallDao {
         this.database = database;
     }
 
-    public long insert(long callerId, long calleeId, String mode, String status,
+    public UUID insert(UUID callerId, UUID calleeId, String mode, String status,
                        Instant startedAt, Instant answeredAt, Instant endedAt, Integer durationSeconds) {
         return database.insertReturningId(
                 "INSERT INTO calls (caller_id, callee_id, mode, status, started_at, answered_at, "
@@ -35,12 +36,12 @@ public class CallDao {
                 durationSeconds);
     }
 
-    public Optional<CallRecord> findById(long id) {
+    public Optional<CallRecord> findById(UUID id) {
         return database.queryOne("SELECT " + COLUMNS + " FROM calls WHERE id = ?", CallDao::map, id);
     }
 
     /** The calls between two people, oldest first. */
-    public List<CallRecord> between(long userA, long userB, int limit) {
+    public List<CallRecord> between(UUID userA, UUID userB, int limit) {
         return database.query(
                 "SELECT " + COLUMNS + " FROM calls "
                         + "WHERE (caller_id = ? AND callee_id = ?) OR (caller_id = ? AND callee_id = ?) "
@@ -54,9 +55,9 @@ public class CallDao {
         // wasNull() reports on the column just read, so it is checked immediately.
         Integer durationSeconds = rs.wasNull() ? null : duration;
         return new CallRecord(
-                rs.getLong("id"),
-                rs.getLong("caller_id"),
-                rs.getLong("callee_id"),
+                rs.getObject("id", UUID.class),
+                rs.getObject("caller_id", UUID.class),
+                rs.getObject("callee_id", UUID.class),
                 rs.getString("mode"),
                 rs.getString("status"),
                 toInstant(rs.getTimestamp("started_at")),

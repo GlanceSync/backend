@@ -1,5 +1,6 @@
 package com.glancesync.modules.auth.service;
 
+import java.util.UUID;
 import com.glancesync.common.exception.ApiException;
 import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.UserDao;
@@ -13,26 +14,19 @@ public class AuthService {
 
     private final UserDao userDao;
     private final PasswordHasher passwordHasher;
-    private final CredentialRules rules;
 
-    public AuthService(UserDao userDao, PasswordHasher passwordHasher, CredentialRules rules) {
+    public AuthService(UserDao userDao, PasswordHasher passwordHasher) {
         this.userDao = userDao;
         this.passwordHasher = passwordHasher;
-        this.rules = rules;
     }
 
     public User register(String username, String password, String confirmPassword) {
-        Map<String, String> errors = rules.validateRegistration(username, password, confirmPassword);
-        if (!errors.isEmpty()) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Please correct the highlighted fields.", errors);
-        }
-
         if (userDao.usernameExists(username)) {
             throw new ApiException(HttpStatus.CONFLICT, "That username is already taken.",
                     Map.of("username", "That username is already taken."));
         }
 
-        long id = userDao.create(username, passwordHasher.hash(password));
+        UUID id = userDao.create(username, passwordHasher.hash(password));
         return userDao.findById(id).orElseThrow(
                 () -> new IllegalStateException("User vanished immediately after creation: " + id));
     }

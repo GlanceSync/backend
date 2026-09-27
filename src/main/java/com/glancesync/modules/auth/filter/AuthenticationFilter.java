@@ -1,5 +1,6 @@
 package com.glancesync.modules.auth.filter;
 
+import java.util.UUID;
 import com.glancesync.common.dto.ErrorResponse;
 import com.glancesync.modules.auth.service.SessionService;
 import io.micronaut.core.annotation.Nullable;
@@ -47,7 +48,7 @@ public class AuthenticationFilter {
                 .map(cookie -> cookie.getValue())
                 .orElse(null);
 
-        Long userId = sessionService.resolveUserId(token).orElse(null);
+        UUID userId = sessionService.resolveUserId(token).orElse(null);
         if (userId == null) {
             return HttpResponse.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.of("You must be signed in."));

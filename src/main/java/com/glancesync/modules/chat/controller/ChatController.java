@@ -1,5 +1,6 @@
 package com.glancesync.modules.chat.controller;
 
+import java.util.UUID;
 import com.glancesync.common.exception.ApiException;
 import com.glancesync.modules.auth.filter.AuthenticationFilter;
 import com.glancesync.modules.chat.dto.ChatEntry;
@@ -28,16 +29,16 @@ public class ChatController {
     }
 
     @Get("/{otherUserId}")
-    public List<ChatEntry> conversation(HttpRequest<?> request, @PathVariable long otherUserId) {
-        long selfId = selfId(request);
-        if (otherUserId == selfId) {
+    public List<ChatEntry> conversation(HttpRequest<?> request, @PathVariable UUID otherUserId) {
+        UUID selfId = selfId(request);
+        if (otherUserId.equals(selfId)) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "You cannot message yourself.");
         }
         return chatService.conversation(selfId, otherUserId);
     }
 
-    private long selfId(HttpRequest<?> request) {
-        return request.getAttribute(AuthenticationFilter.USER_ID_ATTRIBUTE, Long.class)
+    private UUID selfId(HttpRequest<?> request) {
+        return request.getAttribute(AuthenticationFilter.USER_ID_ATTRIBUTE, UUID.class)
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "You must be signed in."));
     }
 }

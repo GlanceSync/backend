@@ -11,6 +11,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * A thin hand-rolled query helper over JDBC. No ORM: every statement is written by hand
@@ -61,7 +62,7 @@ public class Database {
     }
 
     /** Runs an INSERT and returns the generated {@code id}. */
-    public long insertReturningId(String sql, Object... params) {
+    public UUID insertReturningId(String sql, Object... params) {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement =
                      connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -69,7 +70,7 @@ public class Database {
             statement.executeUpdate();
             try (ResultSet keys = statement.getGeneratedKeys()) {
                 if (keys.next()) {
-                    return keys.getLong("id");
+                    return keys.getObject("id", UUID.class);
                 }
                 throw new DatabaseException("Insert returned no generated id: " + sql, null);
             }

@@ -1,5 +1,6 @@
 package com.glancesync.modules.event.controller;
 
+import java.util.UUID;
 import com.glancesync.common.exception.ApiException;
 import com.glancesync.modules.auth.filter.AuthenticationFilter;
 import com.glancesync.modules.event.dto.ProposeEventRequest;
@@ -45,17 +46,17 @@ public class EventsController {
     }
 
     @Post("/{eventId}/accept")
-    public Event accept(HttpRequest<?> request, @PathVariable long eventId) {
+    public Event accept(HttpRequest<?> request, @PathVariable UUID eventId) {
         return eventService.respond(selfId(request), eventId, true);
     }
 
     @Post("/{eventId}/decline")
-    public Event decline(HttpRequest<?> request, @PathVariable long eventId) {
+    public Event decline(HttpRequest<?> request, @PathVariable UUID eventId) {
         return eventService.respond(selfId(request), eventId, false);
     }
 
     @Post("/{eventId}/cancel")
-    public Event cancel(HttpRequest<?> request, @PathVariable long eventId) {
+    public Event cancel(HttpRequest<?> request, @PathVariable UUID eventId) {
         return eventService.cancel(selfId(request), eventId);
     }
 
@@ -71,8 +72,8 @@ public class EventsController {
         }
     }
 
-    private long selfId(HttpRequest<?> request) {
-        return request.getAttribute(AuthenticationFilter.USER_ID_ATTRIBUTE, Long.class)
+    private UUID selfId(HttpRequest<?> request) {
+        return request.getAttribute(AuthenticationFilter.USER_ID_ATTRIBUTE, UUID.class)
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "You must be signed in."));
     }
 }

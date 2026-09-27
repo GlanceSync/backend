@@ -1,5 +1,6 @@
 package com.glancesync.modules.block.service;
 
+import java.util.UUID;
 import com.glancesync.common.exception.ApiException;
 import com.glancesync.modules.block.repo.BlockDao;
 import com.glancesync.modules.notification.service.NotificationService;
@@ -20,7 +21,7 @@ public class BlockService {
         this.notifications = notifications;
     }
 
-    public void block(long blockerId, long blockedId) {
+    public void block(UUID blockerId, UUID blockedId) {
         String blockerName = requireOther(blockerId, blockedId);
 
         blockDao.block(blockerId, blockedId);
@@ -28,7 +29,7 @@ public class BlockService {
                 blockerName + " has blocked you.");
     }
 
-    public void unblock(long blockerId, long blockedId) {
+    public void unblock(UUID blockerId, UUID blockedId) {
         String blockerName = requireOther(blockerId, blockedId);
 
         // Only say anything if something actually changed.
@@ -39,19 +40,19 @@ public class BlockService {
     }
 
     /** True when either side has blocked the other: contact is off in both directions. */
-    public boolean isBlockedEitherWay(long userA, long userB) {
+    public boolean isBlockedEitherWay(UUID userA, UUID userB) {
         return blockDao.blockedEitherWay(userA, userB);
     }
 
-    public void assertNotBlocked(long userA, long userB) {
+    public void assertNotBlocked(UUID userA, UUID userB) {
         if (isBlockedEitherWay(userA, userB)) {
             throw new ApiException(HttpStatus.FORBIDDEN, "You cannot contact this person.");
         }
     }
 
     /** Validates the pair and returns the blocker's username for the message text. */
-    private String requireOther(long blockerId, long blockedId) {
-        if (blockerId == blockedId) {
+    private String requireOther(UUID blockerId, UUID blockedId) {
+        if (blockerId.equals(blockedId)) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "You cannot block yourself.");
         }
         if (userDao.findById(blockedId).isEmpty()) {

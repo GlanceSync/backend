@@ -1,5 +1,6 @@
 package com.glancesync.modules.user.controller;
 
+import java.util.UUID;
 import com.glancesync.common.exception.ApiException;
 import com.glancesync.modules.auth.filter.AuthenticationFilter;
 import com.glancesync.modules.user.dto.UserResponse;
@@ -39,7 +40,7 @@ public class AvatarController {
 
     @Put(value = "/me/avatar", consumes = {MediaType.IMAGE_JPEG, MediaType.IMAGE_PNG, "image/webp"})
     public UserResponse upload(HttpRequest<?> request, @Body byte[] body) {
-        long selfId = selfId(request);
+        UUID selfId = selfId(request);
         if (body == null || body.length == 0) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Choose an image to upload.");
         }
@@ -59,13 +60,13 @@ public class AvatarController {
 
     @Delete("/me/avatar")
     public UserResponse remove(HttpRequest<?> request) {
-        long selfId = selfId(request);
+        UUID selfId = selfId(request);
         avatarDao.delete(selfId);
         return toResponse(selfId);
     }
 
     @Get("/{userId}/avatar")
-    public HttpResponse<byte[]> show(@PathVariable long userId) {
+    public HttpResponse<byte[]> show(@PathVariable UUID userId) {
         return avatarDao.find(userId)
                 .map(avatar -> HttpResponse.ok(avatar.data())
                         .contentType(avatar.contentType())
@@ -75,7 +76,7 @@ public class AvatarController {
                 .orElseGet(HttpResponse::notFound);
     }
 
-    private UserResponse toResponse(long userId) {
+    private UserResponse toResponse(UUID userId) {
         User user = userDao.findById(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "That account no longer exists."));
         return new UserResponse(user.id(), user.username(), user.avatarUrl());
@@ -107,8 +108,8 @@ public class AvatarController {
         return true;
     }
 
-    private long selfId(HttpRequest<?> request) {
-        return request.getAttribute(AuthenticationFilter.USER_ID_ATTRIBUTE, Long.class)
+    private UUID selfId(HttpRequest<?> request) {
+        return request.getAttribute(AuthenticationFilter.USER_ID_ATTRIBUTE, UUID.class)
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "You must be signed in."));
     }
 }

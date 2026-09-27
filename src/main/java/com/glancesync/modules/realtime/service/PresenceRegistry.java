@@ -1,5 +1,6 @@
 package com.glancesync.modules.realtime.service;
 
+import java.util.UUID;
 import io.micronaut.websocket.WebSocketSession;
 import jakarta.inject.Singleton;
 
@@ -20,10 +21,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @Singleton
 public class PresenceRegistry {
 
-    private final Map<Long, Set<WebSocketSession>> sessionsByUser = new ConcurrentHashMap<>();
+    private final Map<UUID, Set<WebSocketSession>> sessionsByUser = new ConcurrentHashMap<>();
 
     /** @return true when this connection is the user's first, i.e. they just came online. */
-    public boolean register(long userId, WebSocketSession session) {
+    public boolean register(UUID userId, WebSocketSession session) {
         boolean[] cameOnline = {false};
         // compute() runs atomically, so a connect racing a disconnect cannot lose its entry.
         sessionsByUser.compute(userId, (key, sessions) -> {
@@ -36,7 +37,7 @@ public class PresenceRegistry {
     }
 
     /** @return true when this was the user's last connection, i.e. they just went offline. */
-    public boolean unregister(long userId, WebSocketSession session) {
+    public boolean unregister(UUID userId, WebSocketSession session) {
         boolean[] wentOffline = {false};
         sessionsByUser.computeIfPresent(userId, (key, sessions) -> {
             sessions.remove(session);
@@ -49,12 +50,12 @@ public class PresenceRegistry {
         return wentOffline[0];
     }
 
-    public boolean isOnline(long userId) {
+    public boolean isOnline(UUID userId) {
         Set<WebSocketSession> sessions = sessionsByUser.get(userId);
         return sessions != null && !sessions.isEmpty();
     }
 
-    public List<Long> onlineUserIds() {
+    public List<UUID> onlineUserIds() {
         return List.copyOf(sessionsByUser.keySet());
     }
 
@@ -66,7 +67,7 @@ public class PresenceRegistry {
     }
 
     /** The sessions belonging to one user. Phase 3 delivers chat messages through this. */
-    public Collection<WebSocketSession> sessionsFor(long userId) {
+    public Collection<WebSocketSession> sessionsFor(UUID userId) {
         return List.copyOf(sessionsByUser.getOrDefault(userId, Set.of()));
     }
 }

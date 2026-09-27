@@ -1,7 +1,7 @@
 -- GlanceSync schema. Applied on startup; every statement is idempotent.
 
 CREATE TABLE IF NOT EXISTS users (
-    id            BIGSERIAL PRIMARY KEY,
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username      VARCHAR(30) NOT NULL,
     password_hash TEXT        NOT NULL,
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -13,7 +13,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS users_username_lower_key ON users (LOWER(usern
 
 CREATE TABLE IF NOT EXISTS sessions (
     token_hash CHAR(64)    PRIMARY KEY,
-    user_id    BIGINT      NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    user_id    UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     expires_at TIMESTAMPTZ NOT NULL
 );
@@ -22,9 +22,9 @@ CREATE INDEX IF NOT EXISTS sessions_user_id_idx    ON sessions (user_id);
 CREATE INDEX IF NOT EXISTS sessions_expires_at_idx ON sessions (expires_at);
 
 CREATE TABLE IF NOT EXISTS messages (
-    id           BIGSERIAL PRIMARY KEY,
-    sender_id    BIGINT      NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    recipient_id BIGINT      NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sender_id    UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    recipient_id UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     body         TEXT        NOT NULL,
     created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
     read_at      TIMESTAMPTZ,
@@ -41,11 +41,11 @@ CREATE INDEX IF NOT EXISTS messages_unread_idx
     ON messages (recipient_id) WHERE read_at IS NULL;
 
 CREATE TABLE IF NOT EXISTS notifications (
-    id         BIGSERIAL PRIMARY KEY,
-    user_id    BIGINT      NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id    UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     -- message | call_missed | event_invited | event_accepted | event_declined | event_cancelled
     type       VARCHAR(40) NOT NULL,
-    actor_id   BIGINT      REFERENCES users (id) ON DELETE CASCADE,
+    actor_id   UUID        REFERENCES users (id) ON DELETE CASCADE,
     body       TEXT        NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     read_at    TIMESTAMPTZ
@@ -57,9 +57,9 @@ CREATE INDEX IF NOT EXISTS notifications_unread_idx
     ON notifications (user_id) WHERE read_at IS NULL;
 
 CREATE TABLE IF NOT EXISTS events (
-    id           BIGSERIAL PRIMARY KEY,
-    organizer_id BIGINT      NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    invitee_id   BIGINT      NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organizer_id UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    invitee_id   UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     title        TEXT        NOT NULL,
     location     TEXT,
     starts_at    TIMESTAMPTZ NOT NULL,
@@ -73,9 +73,9 @@ CREATE INDEX IF NOT EXISTS events_organizer_idx ON events (organizer_id, starts_
 CREATE INDEX IF NOT EXISTS events_invitee_idx   ON events (invitee_id, starts_at);
 
 CREATE TABLE IF NOT EXISTS calls (
-    id               BIGSERIAL PRIMARY KEY,
-    caller_id        BIGINT      NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    callee_id        BIGINT      NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    caller_id        UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    callee_id        UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     -- audio | video
     mode             VARCHAR(8)  NOT NULL,
     -- answered | missed | declined
@@ -92,8 +92,8 @@ CREATE INDEX IF NOT EXISTS calls_pair_idx
     ON calls (LEAST(caller_id, callee_id), GREATEST(caller_id, callee_id), started_at);
 
 CREATE TABLE IF NOT EXISTS blocks (
-    blocker_id BIGINT      NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    blocked_id BIGINT      NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    blocker_id UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    blocked_id UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     PRIMARY KEY (blocker_id, blocked_id),
     CONSTRAINT blocks_not_self CHECK (blocker_id <> blocked_id)
@@ -107,7 +107,7 @@ CREATE INDEX IF NOT EXISTS blocks_blocked_idx ON blocks (blocked_id);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_updated_at TIMESTAMPTZ;
 
 CREATE TABLE IF NOT EXISTS user_avatars (
-    user_id      BIGINT      PRIMARY KEY REFERENCES users (id) ON DELETE CASCADE,
+    user_id      UUID        PRIMARY KEY REFERENCES users (id) ON DELETE CASCADE,
     content_type VARCHAR(20) NOT NULL,
     data         BYTEA       NOT NULL,
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()

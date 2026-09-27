@@ -1,5 +1,6 @@
 package com.glancesync.modules.notification.controller;
 
+import java.util.UUID;
 import com.glancesync.common.exception.ApiException;
 import com.glancesync.modules.auth.filter.AuthenticationFilter;
 import com.glancesync.modules.notification.entity.Notification;
@@ -35,8 +36,8 @@ public class NotificationsController {
         return HttpResponse.noContent();
     }
 
-    private long selfId(HttpRequest<?> request) {
-        return request.getAttribute(AuthenticationFilter.USER_ID_ATTRIBUTE, Long.class)
+    private UUID selfId(HttpRequest<?> request) {
+        return request.getAttribute(AuthenticationFilter.USER_ID_ATTRIBUTE, UUID.class)
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "You must be signed in."));
     }
 }

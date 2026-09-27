@@ -1,5 +1,6 @@
 package com.glancesync.modules.user.controller;
 
+import java.util.UUID;
 import com.glancesync.common.exception.ApiException;
 import com.glancesync.modules.auth.filter.AuthenticationFilter;
 import com.glancesync.modules.block.repo.BlockDao;
@@ -47,12 +48,12 @@ public class UsersController {
      */
     @Get
     public List<PersonResponse> list(HttpRequest<?> request) {
-        long selfId = selfId(request);
+        UUID selfId = selfId(request);
 
         // One query each for previews and block state, rather than one per person.
-        Map<Long, Message> latest = messageDao.latestPerCounterpart(selfId);
-        Set<Long> iBlocked = blockDao.blockedBy(selfId);
-        Set<Long> blockedMe = blockDao.blockersOf(selfId);
+        Map<UUID, Message> latest = messageDao.latestPerCounterpart(selfId);
+        Set<UUID> iBlocked = blockDao.blockedBy(selfId);
+        Set<UUID> blockedMe = blockDao.blockersOf(selfId);
 
         return userDao.findAllExcept(selfId).stream()
                 .map(user -> {
@@ -73,19 +74,19 @@ public class UsersController {
     }
 
     @Post("/{otherUserId}/block")
-    public HttpResponse<?> block(HttpRequest<?> request, @PathVariable long otherUserId) {
+    public HttpResponse<?> block(HttpRequest<?> request, @PathVariable UUID otherUserId) {
         blockService.block(selfId(request), otherUserId);
         return HttpResponse.noContent();
     }
 
     @Post("/{otherUserId}/unblock")
-    public HttpResponse<?> unblock(HttpRequest<?> request, @PathVariable long otherUserId) {
+    public HttpResponse<?> unblock(HttpRequest<?> request, @PathVariable UUID otherUserId) {
         blockService.unblock(selfId(request), otherUserId);
         return HttpResponse.noContent();
     }
 
-    private long selfId(HttpRequest<?> request) {
-        return request.getAttribute(AuthenticationFilter.USER_ID_ATTRIBUTE, Long.class)
+    private UUID selfId(HttpRequest<?> request) {
+        return request.getAttribute(AuthenticationFilter.USER_ID_ATTRIBUTE, UUID.class)
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "You must be signed in."));
     }
 }

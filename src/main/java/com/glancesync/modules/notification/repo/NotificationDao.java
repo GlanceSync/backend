@@ -1,5 +1,6 @@
 package com.glancesync.modules.notification.repo;
 
+import java.util.UUID;
 import com.glancesync.common.db.Database;
 import com.glancesync.modules.notification.entity.Notification;
 import jakarta.inject.Singleton;
@@ -25,42 +26,40 @@ public class NotificationDao {
         this.database = database;
     }
 
-    public long insert(long userId, String type, Long actorId, String body) {
+    public UUID insert(UUID userId, String type, UUID actorId, String body) {
         return database.insertReturningId(
                 "INSERT INTO notifications (user_id, type, actor_id, body) VALUES (?, ?, ?, ?)",
                 userId, type, actorId, body);
     }
 
-    public Optional<Notification> findById(long id) {
+    public Optional<Notification> findById(UUID id) {
         return database.queryOne(SELECT + "WHERE n.id = ?", NotificationDao::map, id);
     }
 
-    public List<Notification> recentFor(long userId, int limit) {
+    public List<Notification> recentFor(UUID userId, int limit) {
         return database.query(
                 SELECT + "WHERE n.user_id = ? ORDER BY n.created_at DESC, n.id DESC LIMIT ?",
                 NotificationDao::map,
                 userId, limit);
     }
 
-    public int unreadCount(long userId) {
+    public int unreadCount(UUID userId) {
         return database.queryOne(
                 "SELECT COUNT(*) AS unread FROM notifications WHERE user_id = ? AND read_at IS NULL",
                 rs -> rs.getInt("unread"),
                 userId).orElse(0);
     }
 
-    public int markAllRead(long userId) {
+    public int markAllRead(UUID userId) {
         return database.update(
                 "UPDATE notifications SET read_at = now() WHERE user_id = ? AND read_at IS NULL",
                 userId);
     }
 
     private static Notification map(ResultSet rs) throws SQLException {
-        long actorIdValue = rs.getLong("actor_id");
-        // wasNull() reports on the column just read, so it must be checked immediately.
-        Long actorId = rs.wasNull() ? null : actorIdValue;
+        UUID actorId = rs.getObject("actor_id", UUID.class);
         return new Notification(
-                rs.getLong("id"),
+                rs.getObject("id", UUID.class),
                 rs.getString("type"),
                 actorId,
                 rs.getString("actor_username"),

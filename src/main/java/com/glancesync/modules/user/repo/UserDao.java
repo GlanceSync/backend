@@ -1,5 +1,6 @@
 package com.glancesync.modules.user.repo;
 
+import java.util.UUID;
 import com.glancesync.common.db.Database;
 import com.glancesync.modules.user.entity.User;
 import jakarta.inject.Singleton;
@@ -28,7 +29,7 @@ public class UserDao {
                 username);
     }
 
-    public Optional<User> findById(long id) {
+    public Optional<User> findById(UUID id) {
         return database.queryOne(
                 "SELECT id, username, password_hash, created_at, last_seen_at, avatar_updated_at "
                         + "FROM users WHERE id = ?",
@@ -43,14 +44,14 @@ public class UserDao {
                 username).isPresent();
     }
 
-    public long create(String username, String passwordHash) {
+    public UUID create(String username, String passwordHash) {
         return database.insertReturningId(
                 "INSERT INTO users (username, password_hash) VALUES (?, ?)",
                 username, passwordHash);
     }
 
     /** Everyone except the caller, newest sign-ups last. */
-    public List<User> findAllExcept(long excludedUserId) {
+    public List<User> findAllExcept(UUID excludedUserId) {
         return database.query(
                 "SELECT id, username, password_hash, created_at, last_seen_at, avatar_updated_at "
                         + "FROM users WHERE id <> ? ORDER BY LOWER(username)",
@@ -58,13 +59,13 @@ public class UserDao {
                 excludedUserId);
     }
 
-    public void touchLastSeen(long userId) {
+    public void touchLastSeen(UUID userId) {
         database.update("UPDATE users SET last_seen_at = now() WHERE id = ?", userId);
     }
 
     private static User mapUser(ResultSet rs) throws SQLException {
         return new User(
-                rs.getLong("id"),
+                rs.getObject("id", UUID.class),
                 rs.getString("username"),
                 rs.getString("password_hash"),
                 toInstant(rs.getTimestamp("created_at")),

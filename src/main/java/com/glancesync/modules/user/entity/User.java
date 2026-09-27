@@ -1,9 +1,15 @@
 package com.glancesync.modules.user.entity;
 
+import java.util.UUID;
 import java.time.Instant;
 
-public record User(long id, String username, String passwordHash, Instant createdAt, Instant lastSeenAt,
-                   Instant avatarUpdatedAt) {
+public record User(
+    UUID id,
+    String username,
+    String passwordHash,
+    Instant createdAt,
+    Instant lastSeenAt,
+    Instant avatarUpdatedAt) {
 
     /**
      * Where the profile photo is served, or null when there is none. The version in the
@@ -13,7 +19,7 @@ public record User(long id, String username, String passwordHash, Instant create
         return avatarUrl(id, avatarUpdatedAt);
     }
 
-    public static String avatarUrl(long userId, Instant avatarUpdatedAt) {
+    public static String avatarUrl(UUID userId, Instant avatarUpdatedAt) {
         return avatarUpdatedAt == null
                 ? null
                 : "/api/users/" + userId + "/avatar?v=" + avatarUpdatedAt.toEpochMilli();

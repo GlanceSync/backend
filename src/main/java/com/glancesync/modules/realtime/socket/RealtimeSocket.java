@@ -1,5 +1,6 @@
 package com.glancesync.modules.realtime.socket;
 
+import java.util.UUID;
 import com.glancesync.common.exception.ApiException;
 import com.glancesync.modules.auth.service.SessionService;
 import com.glancesync.modules.block.service.BlockService;
@@ -69,7 +70,7 @@ public class RealtimeSocket {
 
     @OnOpen
     public void onOpen(WebSocketSession session, HttpRequest<?> request) {
-        Long userId = request.getCookies()
+        UUID userId = request.getCookies()
                 .findCookie(SessionService.COOKIE_NAME)
                 .flatMap(cookie -> sessionService.resolveUserId(cookie.getValue()))
                 .orElse(null);
@@ -98,7 +99,7 @@ public class RealtimeSocket {
 
     @OnClose
     public void onClose(WebSocketSession session) {
-        Long userId = userId(session);
+        UUID userId = userId(session);
         if (userId == null) {
             return;
         }
@@ -116,7 +117,7 @@ public class RealtimeSocket {
 
     @OnMessage
     public void onMessage(String raw, WebSocketSession session) {
-        Long userId = userId(session);
+        UUID userId = userId(session);
         if (userId == null) {
             return;
         }
@@ -150,7 +151,7 @@ public class RealtimeSocket {
         }
     }
 
-    private void handleSend(long senderId, RealtimeMessages.Inbound inbound) {
+    private void handleSend(UUID senderId, RealtimeMessages.Inbound inbound) {
         Message message = chatService.send(senderId, inbound.recipientId(), inbound.body());
         RealtimeMessages.ChatMessage payload = new RealtimeMessages.ChatMessage(message);
 
@@ -158,7 +159,7 @@ public class RealtimeSocket {
         // message they see is always the stored one with its real id and timestamp.
         sendToUser(senderId, payload);
 
-        long recipientId = message.recipientId();
+        UUID recipientId = message.recipientId();
         sendToUser(recipientId, payload);
         // Their badge changes even if they are not looking at this conversation.
         sendToUser(recipientId, new RealtimeMessages.ChatUnread(chatService.unreadCounts(recipientId)));
@@ -169,8 +170,8 @@ public class RealtimeSocket {
                 senderName + " sent you a message.");
     }
 
-    private void handleRead(long readerId, RealtimeMessages.Inbound inbound) {
-        Long otherUserId = inbound.withUserId();
+    private void handleRead(UUID readerId, RealtimeMessages.Inbound inbound) {
+        UUID otherUserId = inbound.withUserId();
         if (otherUserId == null) {
             return;
         }
@@ -191,8 +192,8 @@ public class RealtimeSocket {
     // candidates between two participants. Audio and video travel peer-to-peer and
     // never reach this process.
 
-    private void handleCallOffer(long callerId, RealtimeMessages.Inbound inbound) {
-        Long calleeId = inbound.targetUserId();
+    private void handleCallOffer(UUID callerId, RealtimeMessages.Inbound inbound) {
+        UUID calleeId = inbound.targetUserId();
         if (calleeId == null || calleeId == callerId) {
             send(callerId, new RealtimeMessages.CallEnded(null, "invalid"));
             return;
@@ -221,7 +222,7 @@ public class RealtimeSocket {
         send(calleeId, signal("call:incoming", call.id(), callerId, mode, inbound.payload()));
     }
 
-    private void handleCallAnswer(long calleeId, RealtimeMessages.Inbound inbound) {
+    private void handleCallAnswer(UUID calleeId, RealtimeMessages.Inbound inbound) {
         CallRegistry.Call call = calls.findParticipating(inbound.callId(), calleeId).orElse(null);
         if (call == null) {
             return;
@@ -232,20 +233,20 @@ public class RealtimeSocket {
     }
 
     /** Forwards a signal to the other participant, after checking the sender is in the call. */
-    private void relayCallSignal(long senderId, RealtimeMessages.Inbound inbound, String type) {
+    private void relayCallSignal(UUID senderId, RealtimeMessages.Inbound inbound, String type) {
         calls.findParticipating(inbound.callId(), senderId).ifPresent(call ->
                 send(call.otherParty(senderId),
                         signal(type, call.id(), senderId, call.mode(), inbound.payload())));
     }
 
-    private void handleCallEnd(long senderId, RealtimeMessages.Inbound inbound, String reason) {
+    private void handleCallEnd(UUID senderId, RealtimeMessages.Inbound inbound, String reason) {
         CallRegistry.Call call = calls.findParticipating(inbound.callId(), senderId).orElse(null);
         if (call == null) {
             return;
         }
         calls.end(call.id());
 
-        long other = call.otherParty(senderId);
+        UUID other = call.otherParty(senderId);
         send(other, new RealtimeMessages.CallEnded(call.id(), reason));
         send(senderId, new RealtimeMessages.CallEnded(call.id(), reason));
 
@@ -256,15 +257,15 @@ public class RealtimeSocket {
      * Declined means the callee turned it down before answering. Anything else that
      * ends without an answer is a missed call, however it was cut short.
      */
-    private String endStatus(CallRegistry.Call call, long senderId, String reason) {
+    private String endStatus(CallRegistry.Call call, UUID senderId, String reason) {
         if (call.answered()) {
             return CallLogService.ANSWERED;
         }
-        boolean declinedByCallee = "rejected".equals(reason) && senderId == call.calleeId();
+        boolean declinedByCallee = "rejected".equals(reason) && senderId.equals(call.calleeId());
         return declinedByCallee ? CallLogService.DECLINED : CallLogService.MISSED;
     }
 
-    private RealtimeMessages.CallSignal signal(String type, String callId, long fromUserId,
+    private RealtimeMessages.CallSignal signal(String type, String callId, UUID fromUserId,
                                                String mode, java.util.Map<String, Object> payload) {
         // Who is calling, as the callee's screen shows them: name and photo.
         var from = userDao.findById(fromUserId);
@@ -274,11 +275,11 @@ public class RealtimeSocket {
                 mode, payload);
     }
 
-    private void send(long userId, Object message) {
+    private void send(UUID userId, Object message) {
         push.toUser(userId, message);
     }
 
-    private void sendToUser(long userId, Object message) {
+    private void sendToUser(UUID userId, Object message) {
         push.toUser(userId, message);
     }
 
@@ -287,11 +288,11 @@ public class RealtimeSocket {
         LOG.warn("WebSocket error on session {}", session.getId(), error);
     }
 
-    private Long userId(WebSocketSession session) {
-        return session.get(USER_ID, Long.class).orElse(null);
+    private UUID userId(WebSocketSession session) {
+        return session.get(USER_ID, UUID.class).orElse(null);
     }
 
-    private void broadcastExcept(long exceptUserId, Object message) {
+    private void broadcastExcept(UUID exceptUserId, Object message) {
         push.toEveryoneExcept(exceptUserId, message);
     }
 

@@ -1,5 +1,6 @@
 package com.glancesync.modules.auth.service;
 
+import java.util.UUID;
 import com.glancesync.modules.auth.repo.SessionDao;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.http.cookie.Cookie;
@@ -44,7 +45,7 @@ public class SessionService {
     }
 
     /** Creates a session and returns the raw token to hand to the client. */
-    public String startSession(long userId) {
+    public String startSession(UUID userId) {
         byte[] bytes = new byte[32];
         RANDOM.nextBytes(bytes);
         String token = HexFormat.of().formatHex(bytes);
@@ -52,7 +53,7 @@ public class SessionService {
         return token;
     }
 
-    public Optional<Long> resolveUserId(String token) {
+    public Optional<UUID> resolveUserId(String token) {
         if (token == null || token.isBlank()) {
             return Optional.empty();
         }

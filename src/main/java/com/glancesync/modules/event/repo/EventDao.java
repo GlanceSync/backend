@@ -1,5 +1,6 @@
 package com.glancesync.modules.event.repo;
 
+import java.util.UUID;
 import com.glancesync.common.db.Database;
 import com.glancesync.modules.event.entity.Event;
 import jakarta.inject.Singleton;
@@ -28,35 +29,35 @@ public class EventDao {
         this.database = database;
     }
 
-    public long insert(long organizerId, long inviteeId, String title, String location, Instant startsAt) {
+    public UUID insert(UUID organizerId, UUID inviteeId, String title, String location, Instant startsAt) {
         return database.insertReturningId(
                 "INSERT INTO events (organizer_id, invitee_id, title, location, starts_at) "
                         + "VALUES (?, ?, ?, ?, ?)",
                 organizerId, inviteeId, title, location, Timestamp.from(startsAt));
     }
 
-    public Optional<Event> findById(long id) {
+    public Optional<Event> findById(UUID id) {
         return database.queryOne(SELECT + "WHERE e.id = ?", EventDao::map, id);
     }
 
     /** Every event the user is part of, soonest first. */
-    public List<Event> findForUser(long userId) {
+    public List<Event> findForUser(UUID userId) {
         return database.query(
                 SELECT + "WHERE e.organizer_id = ? OR e.invitee_id = ? ORDER BY e.starts_at",
                 EventDao::map,
                 userId, userId);
     }
 
-    public int updateStatus(long eventId, String status) {
+    public int updateStatus(UUID eventId, String status) {
         return database.update("UPDATE events SET status = ? WHERE id = ?", status, eventId);
     }
 
     private static Event map(ResultSet rs) throws SQLException {
         return new Event(
-                rs.getLong("id"),
-                rs.getLong("organizer_id"),
+                rs.getObject("id", UUID.class),
+                rs.getObject("organizer_id", UUID.class),
                 rs.getString("organizer_username"),
-                rs.getLong("invitee_id"),
+                rs.getObject("invitee_id", UUID.class),
                 rs.getString("invitee_username"),
                 rs.getString("title"),
                 rs.getString("location"),

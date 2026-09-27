@@ -1,5 +1,6 @@
 package com.glancesync.modules.call.service;
 
+import java.util.UUID;
 import com.glancesync.modules.call.repo.CallDao;
 import com.glancesync.modules.notification.service.NotificationService;
 import com.glancesync.modules.realtime.dto.RealtimeMessages;
@@ -46,14 +47,14 @@ public class CallLogService {
     }
 
     /** Records a call that never rang, because the other person was not connected. */
-    public void recordNotReached(long callerId, long calleeId, String mode) {
+    public void recordNotReached(UUID callerId, UUID calleeId, String mode) {
         Instant now = Instant.now();
         store(callerId, calleeId, mode, MISSED, now, null, now, null);
     }
 
-    private void store(long callerId, long calleeId, String mode, String status,
+    private void store(UUID callerId, UUID calleeId, String mode, String status,
                        Instant startedAt, Instant answeredAt, Instant endedAt, Integer durationSeconds) {
-        long id = callDao.insert(callerId, calleeId, mode, status,
+        UUID id = callDao.insert(callerId, calleeId, mode, status,
                 startedAt, answeredAt, endedAt, durationSeconds);
 
         callDao.findById(id).ifPresent(record -> {

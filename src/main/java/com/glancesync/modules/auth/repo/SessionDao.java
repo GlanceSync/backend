@@ -1,5 +1,6 @@
 package com.glancesync.modules.auth.repo;
 
+import java.util.UUID;
 import com.glancesync.common.db.Database;
 import jakarta.inject.Singleton;
 
@@ -14,17 +15,17 @@ public class SessionDao {
         this.database = database;
     }
 
-    public void create(String tokenHash, long userId, java.time.Instant expiresAt) {
+    public void create(String tokenHash, UUID userId, java.time.Instant expiresAt) {
         database.update(
                 "INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)",
                 tokenHash, userId, java.sql.Timestamp.from(expiresAt));
     }
 
     /** Returns the user id for a live (unexpired) session. */
-    public Optional<Long> findUserId(String tokenHash) {
+    public Optional<UUID> findUserId(String tokenHash) {
         return database.queryOne(
                 "SELECT user_id FROM sessions WHERE token_hash = ? AND expires_at > now()",
-                rs -> rs.getLong("user_id"),
+                rs -> rs.getObject("user_id", UUID.class),
                 tokenHash);
     }
 

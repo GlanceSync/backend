@@ -1,5 +1,6 @@
 package com.glancesync.modules.call.controller;
 
+import java.util.UUID;
 import com.glancesync.common.exception.ApiException;
 import com.glancesync.modules.auth.filter.AuthenticationFilter;
 import com.glancesync.modules.call.dto.IceServer;
@@ -53,7 +54,7 @@ public class CallsController {
 
     @Get("/ice-servers")
     public IceServersResponse iceServers(HttpRequest<?> request) {
-        long selfId = request.getAttribute(AuthenticationFilter.USER_ID_ATTRIBUTE, Long.class)
+        UUID selfId = request.getAttribute(AuthenticationFilter.USER_ID_ATTRIBUTE, UUID.class)
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "You must be signed in."));
 
         List<IceServer> servers = new ArrayList<>();

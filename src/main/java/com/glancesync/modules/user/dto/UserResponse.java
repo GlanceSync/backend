@@ -1,5 +1,6 @@
 package com.glancesync.modules.user.dto;
 
+import java.util.UUID;
 import io.micronaut.serde.annotation.Serdeable;
 
 /**
@@ -7,5 +8,5 @@ import io.micronaut.serde.annotation.Serdeable;
  * {@code avatarUrl} is null until they upload a photo.
  */
 @Serdeable
-public record UserResponse(long id, String username, String avatarUrl) {
+public record UserResponse(UUID id, String username, String avatarUrl) {
 }

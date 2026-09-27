@@ -1,5 +1,6 @@
 package com.glancesync.modules.chat.service;
 
+import java.util.UUID;
 import com.glancesync.common.exception.ApiException;
 import com.glancesync.modules.block.service.BlockService;
 import com.glancesync.modules.call.repo.CallDao;
@@ -40,11 +41,11 @@ public class ChatService {
      * user typed: it is never HTML-escaped here, because escaping belongs at the point
      * of rendering. Angular escapes interpolated text by default.
      */
-    public Message send(long senderId, Long recipientId, String rawBody) {
+    public Message send(UUID senderId, UUID recipientId, String rawBody) {
         if (recipientId == null) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "A recipient is required.");
         }
-        if (recipientId == senderId) {
+        if (recipientId.equals(senderId)) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "You cannot message yourself.");
         }
         if (userDao.findById(recipientId).isEmpty()) {
@@ -62,7 +63,7 @@ public class ChatService {
                     "A message cannot be longer than " + MAX_BODY_LENGTH + " characters.");
         }
 
-        long id = messageDao.insert(senderId, recipientId, body);
+        UUID id = messageDao.insert(senderId, recipientId, body);
         return messageDao.findById(id).orElseThrow(
                 () -> new IllegalStateException("Message vanished after insert: " + id));
     }
@@ -72,7 +73,7 @@ public class ChatService {
      * last-N first. Each side is limited before merging, so a burst of one kind cannot
      * crowd the other out of the query.
      */
-    public List<ChatEntry> conversation(long selfId, long otherUserId) {
+    public List<ChatEntry> conversation(UUID selfId, UUID otherUserId) {
         if (userDao.findById(otherUserId).isEmpty()) {
             throw new ApiException(HttpStatus.NOT_FOUND, "That person no longer exists.");
         }
@@ -92,11 +93,11 @@ public class ChatService {
     }
 
     /** @return how many messages were newly marked as read. */
-    public int markRead(long readerId, long otherUserId) {
+    public int markRead(UUID readerId, UUID otherUserId) {
         return messageDao.markConversationRead(readerId, otherUserId);
     }
 
-    public Map<Long, Integer> unreadCounts(long userId) {
+    public Map<UUID, Integer> unreadCounts(UUID userId) {
         return messageDao.unreadCountsBySender(userId);
     }
 }
