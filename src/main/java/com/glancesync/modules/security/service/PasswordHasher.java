@@ -1,11 +1,11 @@
-package com.glancesync.modules.auth.service;
+package com.glancesync.modules.security.service;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import jakarta.inject.Singleton;
 
 /**
  * bcrypt hashing. A hashing primitive, not a user-account framework: sessions,
- * validation and login flow are all written by hand in this package.
+ * validation and login flow are written by hand in the auth module.
  */
 @Singleton
 public class PasswordHasher {

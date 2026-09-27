@@ -1,4 +1,4 @@
-package com.glancesync.modules.auth.filter;
+package com.glancesync.modules.security.filter;
 
 import java.util.UUID;
 import com.glancesync.common.dto.ErrorResponse;

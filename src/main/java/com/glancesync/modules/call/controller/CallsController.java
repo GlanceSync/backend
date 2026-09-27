@@ -2,7 +2,7 @@ package com.glancesync.modules.call.controller;
 
 import java.util.UUID;
 import com.glancesync.common.exception.ApiException;
-import com.glancesync.modules.auth.filter.AuthenticationFilter;
+import com.glancesync.modules.security.filter.AuthenticationFilter;
 import com.glancesync.modules.call.dto.IceServer;
 import com.glancesync.modules.call.dto.IceServersResponse;
 import io.micronaut.context.annotation.Value;

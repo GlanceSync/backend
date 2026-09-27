@@ -2,7 +2,7 @@ package com.glancesync.modules.user.controller;
 
 import java.util.UUID;
 import com.glancesync.common.exception.ApiException;
-import com.glancesync.modules.auth.filter.AuthenticationFilter;
+import com.glancesync.modules.security.filter.AuthenticationFilter;
 import com.glancesync.modules.block.repo.BlockDao;
 import com.glancesync.modules.block.service.BlockService;
 import com.glancesync.modules.chat.entity.Message;

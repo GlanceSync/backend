@@ -2,6 +2,7 @@ package com.glancesync.modules.auth.service;
 
 import java.util.UUID;
 import com.glancesync.common.exception.ApiException;
+import com.glancesync.modules.security.service.PasswordHasher;
 import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.UserDao;
 import io.micronaut.http.HttpStatus;

@@ -2,7 +2,7 @@ package com.glancesync.modules.chat.controller;
 
 import java.util.UUID;
 import com.glancesync.common.exception.ApiException;
-import com.glancesync.modules.auth.filter.AuthenticationFilter;
+import com.glancesync.modules.security.filter.AuthenticationFilter;
 import com.glancesync.modules.chat.dto.ChatEntry;
 import com.glancesync.modules.chat.service.ChatService;
 import io.micronaut.http.HttpRequest;
