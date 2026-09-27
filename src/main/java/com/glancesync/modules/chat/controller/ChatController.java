@@ -9,6 +9,7 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.PathVariable;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
 
@@ -16,6 +17,7 @@ import java.util.List;
  * History only. Sending happens over the WebSocket, so a message takes one path and
  * arrives the same way whether or not the recipient is connected.
  */
+@Tag(name = "Messages")
 @Controller("/api/messages")
 public class ChatController {
 

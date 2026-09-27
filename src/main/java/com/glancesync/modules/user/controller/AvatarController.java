@@ -16,11 +16,13 @@ import io.micronaut.http.annotation.Delete;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Put;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
  * Profile photos. The browser crops and shrinks the image before sending it, so the
  * body is the finished file; the server's job is to refuse anything that is not one.
  */
+@Tag(name = "Users")
 @Controller("/api/users")
 public class AvatarController {
 

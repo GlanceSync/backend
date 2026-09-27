@@ -9,6 +9,7 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -29,6 +30,7 @@ import java.util.List;
  * the password an HMAC of it. They are minted per request and expire on their own, so
  * no long-lived TURN password ever reaches the browser.
  */
+@Tag(name = "Calls")
 @Controller("/api/calls")
 public class CallsController {
 
