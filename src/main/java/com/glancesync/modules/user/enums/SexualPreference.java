@@ -1,4 +1,4 @@
-package com.glancesync.modules.user.entity;
+package com.glancesync.modules.user.enums;
 
 import io.micronaut.serde.annotation.Serdeable;
 
