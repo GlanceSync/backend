@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
     -- gender: male | female. Null until the profile is completed.
     gender            VARCHAR(16),
     -- heterosexual | homosexual | bisexual
-    sexual_preference VARCHAR(16)  NOT NULL DEFAULT 'heterosexual',
+    sexual_preference VARCHAR(16)  NOT NULL DEFAULT 'bisexual',
     biography         TEXT,
     birth_date        DATE,
 
