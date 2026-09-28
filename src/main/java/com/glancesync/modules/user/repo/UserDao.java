@@ -2,6 +2,9 @@ package com.glancesync.modules.user.repo;
 
 import java.util.UUID;
 import com.glancesync.common.db.Database;
+import com.glancesync.modules.user.enums.Gender;
+import com.glancesync.modules.user.enums.LocationSource;
+import com.glancesync.modules.user.enums.SexualPreference;
 import com.glancesync.modules.user.entity.User;
 import jakarta.inject.Singleton;
 
@@ -9,6 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,7 +21,9 @@ public class UserDao {
 
     private static final String SELECT_USER =
             "SELECT id, username, email, first_name, last_name, password_hash, email_verified_at, "
-                    + "created_at, last_seen_at, avatar_updated_at FROM users ";
+                    + "created_at, last_seen_at, profile_picture_id, gender, sexual_preference, biography, birth_date, "
+                    + "latitude, longitude, city, location_source, location_updated_at, fame_rating, "
+                    + "profile_completed FROM users ";
 
     private final Database database;
 
@@ -64,12 +70,48 @@ public class UserDao {
                 username, email, firstName, lastName, passwordHash);
     }
 
-    /** Everyone except the caller, newest sign-ups last. */
     public List<User> findAllExcept(UUID excludedUserId) {
         return database.query(
                 SELECT_USER + "WHERE id <> ? ORDER BY LOWER(username)",
                 UserDao::mapUser,
                 excludedUserId);
+    }
+
+    public void updateProfile(UUID userId, Gender gender, SexualPreference sexualPreference, String biography,
+                              LocalDate birthDate) {
+        database.update(
+                "UPDATE users SET gender = ?, sexual_preference = ?, biography = ?, birth_date = ? WHERE id = ?",
+                gender == null ? null : gender.dbValue(), sexualPreference.dbValue(), biography, birthDate, userId);
+    }
+
+    public void updateLocation(UUID userId, Double latitude, Double longitude, String city, LocationSource source) {
+        database.update(
+                "UPDATE users SET latitude = ?, longitude = ?, city = ?, location_source = ?, "
+                        + "location_updated_at = now() WHERE id = ?",
+                latitude, longitude, city, source.dbValue(), userId);
+    }
+
+    public void refreshProfileCompleted(UUID userId) {
+        database.update(
+                "UPDATE users SET profile_completed = ("
+                        + "gender IS NOT NULL AND birth_date IS NOT NULL AND biography IS NOT NULL "
+                        + "AND profile_picture_id IS NOT NULL AND location_source IS NOT NULL "
+                        + "AND EXISTS (SELECT 1 FROM user_interests WHERE user_id = users.id)"
+                        + ") WHERE id = ?",
+                userId);
+    }
+
+    public void updateNames(UUID userId, String firstName, String lastName) {
+        database.update("UPDATE users SET first_name = ?, last_name = ? WHERE id = ?", firstName, lastName, userId);
+    }
+
+    public void updatePasswordHash(UUID userId, String passwordHash) {
+        database.update("UPDATE users SET password_hash = ? WHERE id = ?", passwordHash, userId);
+    }
+
+    public void markEmailVerified(UUID userId) {
+        database.update(
+                "UPDATE users SET email_verified_at = COALESCE(email_verified_at, now()) WHERE id = ?", userId);
     }
 
     public void touchLastSeen(UUID userId) {
@@ -87,7 +129,18 @@ public class UserDao {
                 toInstant(rs.getTimestamp("email_verified_at")),
                 toInstant(rs.getTimestamp("created_at")),
                 toInstant(rs.getTimestamp("last_seen_at")),
-                toInstant(rs.getTimestamp("avatar_updated_at")));
+                rs.getObject("profile_picture_id", UUID.class),
+                Gender.fromDb(rs.getString("gender")),
+                SexualPreference.fromDb(rs.getString("sexual_preference")),
+                rs.getString("biography"),
+                rs.getObject("birth_date", LocalDate.class),
+                rs.getObject("latitude", Double.class),
+                rs.getObject("longitude", Double.class),
+                rs.getString("city"),
+                LocationSource.fromDb(rs.getString("location_source")),
+                toInstant(rs.getTimestamp("location_updated_at")),
+                rs.getInt("fame_rating"),
+                rs.getBoolean("profile_completed"));
     }
 
     private static Instant toInstant(Timestamp timestamp) {

@@ -24,6 +24,10 @@ public class NotificationService {
     public static final String TYPE_EVENT_CANCELLED = "event_cancelled";
     public static final String TYPE_USER_BLOCKED = "user_blocked";
     public static final String TYPE_USER_UNBLOCKED = "user_unblocked";
+    public static final String TYPE_LIKE = "like";
+    public static final String TYPE_MATCH = "match";
+    public static final String TYPE_UNLIKE = "unlike";
+    public static final String TYPE_PROFILE_VIEW = "profile_view";
 
     private static final int RECENT_LIMIT = 50;
 

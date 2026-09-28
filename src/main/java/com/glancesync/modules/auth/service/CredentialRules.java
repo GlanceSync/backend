@@ -51,17 +51,36 @@ public class CredentialRules {
         putIfInvalid(errors, "username", validateUsername(request.username()));
         putIfInvalid(errors, "firstName", validateName(request.firstName(), "First name"));
         putIfInvalid(errors, "lastName", validateName(request.lastName(), "Last name"));
-        putIfInvalid(errors, "password", validatePassword(request));
+        putIfInvalid(errors, "password", validatePassword(request.password(), request.username(),
+                request.firstName(), request.lastName(), request.email()));
+        putIfMismatched(errors, request.password(), request.confirmPassword());
 
-        String password = request.password();
-        String confirm = request.confirmPassword();
+        return errors;
+    }
+
+    public Map<String, String> validateAccount(String firstName, String lastName, String email) {
+        Map<String, String> errors = new HashMap<>();
+        putIfInvalid(errors, "firstName", validateName(firstName, "First name"));
+        putIfInvalid(errors, "lastName", validateName(lastName, "Last name"));
+        putIfInvalid(errors, "email", validateEmail(email));
+        return errors;
+    }
+
+    /** A replacement password for an existing account, as in a reset. */
+    public Map<String, String> validateNewPassword(String password, String confirmPassword, String username,
+                                                   String firstName, String lastName, String email) {
+        Map<String, String> errors = new HashMap<>();
+        putIfInvalid(errors, "password", validatePassword(password, username, firstName, lastName, email));
+        putIfMismatched(errors, password, confirmPassword);
+        return errors;
+    }
+
+    private static void putIfMismatched(Map<String, String> errors, String password, String confirm) {
         if (confirm == null || confirm.isEmpty()) {
             errors.put("confirmPassword", "Please confirm your password.");
         } else if (password != null && !password.equals(confirm)) {
             errors.put("confirmPassword", "Passwords do not match.");
         }
-
-        return errors;
     }
 
     private static void putIfInvalid(Map<String, String> errors, String field, String error) {
@@ -106,8 +125,8 @@ public class CredentialRules {
         return null;
     }
 
-    private String validatePassword(RegisterRequest request) {
-        String password = request.password();
+    private String validatePassword(String password, String username, String firstName, String lastName,
+                                    String email) {
         if (password == null || password.isEmpty()) {
             return "Password is required.";
         }
@@ -120,7 +139,7 @@ public class CredentialRules {
         if (isCommon(password)) {
             return "That password is too common. Please choose a less predictable one.";
         }
-        if (containsPersonalInfo(password, request)) {
+        if (containsPersonalInfo(password, username, firstName, lastName, email)) {
             return "Password must not contain your username, name or email.";
         }
         if (password.chars().noneMatch(Character::isDigit)
@@ -151,10 +170,11 @@ public class CredentialRules {
         return !unleeted.isEmpty() && commonPasswords.contains(unleeted);
     }
 
-    private boolean containsPersonalInfo(String password, RegisterRequest request) {
+    private boolean containsPersonalInfo(String password, String username, String firstName, String lastName,
+                                         String email) {
         String normalized = normalize(password);
-        String emailLocalPart = request.email() == null ? null : request.email().split("@", 2)[0];
-        return Stream.of(request.username(), request.firstName(), request.lastName(), emailLocalPart)
+        String emailLocalPart = email == null ? null : email.split("@", 2)[0];
+        return Stream.of(username, firstName, lastName, emailLocalPart)
                 .filter(part -> part != null && part.length() >= 3)
                 .map(CredentialRules::normalize)
                 .anyMatch(normalized::contains);
