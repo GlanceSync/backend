@@ -69,6 +69,7 @@ public class InterestService {
     public void delete(UUID selfId, UUID interestId) {
         requireEditable(selfId, interestId);
         interestDao.delete(interestId);
+        userDao.refreshProfileCompleted(selfId);
     }
 
     public List<Interest> forUser(UUID userId) {
@@ -86,6 +87,7 @@ public class InterestService {
             throw tooMany();
         }
         interestDao.addToUser(selfId, interest.id());
+        userDao.refreshProfileCompleted(selfId);
         return interestDao.forUser(selfId);
     }
 
@@ -106,6 +108,7 @@ public class InterestService {
                 .map(name -> create(selfId, name).interest().id())
                 .toList();
         interestDao.replaceForUser(selfId, ids);
+        userDao.refreshProfileCompleted(selfId);
         return interestDao.forUser(selfId);
     }
 
@@ -113,6 +116,7 @@ public class InterestService {
         if (interestDao.removeFromUser(selfId, interestId) == 0) {
             throw new ApiException(HttpStatus.NOT_FOUND, "That tag is not on your profile.");
         }
+        userDao.refreshProfileCompleted(selfId);
         return interestDao.forUser(selfId);
     }
 
