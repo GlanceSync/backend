@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS users (
     first_name        VARCHAR(50)  NOT NULL,
     last_name         VARCHAR(50)  NOT NULL,
     password_hash     TEXT         NOT NULL,
-    -- Null until the link in the verification email is followed; signing in needs it.
     email_verified_at TIMESTAMPTZ,
     created_at        TIMESTAMPTZ  NOT NULL DEFAULT now(),
     last_seen_at      TIMESTAMPTZ
@@ -17,7 +16,6 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE UNIQUE INDEX IF NOT EXISTS users_username_lower_key ON users (LOWER(username));
 CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower_key    ON users (LOWER(email));
 
--- One-time links sent by email. Only the SHA-256 of the token is stored.
 CREATE TABLE IF NOT EXISTS email_verifications (
     token_hash CHAR(64)    PRIMARY KEY,
     user_id    UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
@@ -27,8 +25,6 @@ CREATE TABLE IF NOT EXISTS email_verifications (
 
 CREATE INDEX IF NOT EXISTS email_verifications_user_id_idx ON email_verifications (user_id);
 
--- One row per signed-in device. The refresh token itself lives in an HttpOnly cookie;
--- only its SHA-256 is stored, and each use swaps it for a new one.
 CREATE TABLE IF NOT EXISTS refresh_tokens (
     token_hash CHAR(64)    PRIMARY KEY,
     user_id    UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
@@ -48,12 +44,9 @@ CREATE TABLE IF NOT EXISTS messages (
     CONSTRAINT messages_not_self CHECK (sender_id <> recipient_id)
 );
 
--- A conversation is the unordered pair of participants, so normalising with
--- LEAST/GREATEST lets one index serve both directions of the same thread.
 CREATE INDEX IF NOT EXISTS messages_conversation_idx
     ON messages (LEAST(sender_id, recipient_id), GREATEST(sender_id, recipient_id), created_at);
 
--- Partial index: unread counts are read constantly, read messages never matter here.
 CREATE INDEX IF NOT EXISTS messages_unread_idx
     ON messages (recipient_id) WHERE read_at IS NULL;
 
@@ -129,3 +122,19 @@ CREATE TABLE IF NOT EXISTS user_avatars (
     data         BYTEA       NOT NULL,
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS interests (
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name       VARCHAR(30) NOT NULL UNIQUE,
+    created_by UUID        REFERENCES users (id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS user_interests (
+    user_id     UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    interest_id UUID        NOT NULL REFERENCES interests (id) ON DELETE CASCADE,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (user_id, interest_id)
+);
+
+CREATE INDEX IF NOT EXISTS user_interests_interest_idx ON user_interests (interest_id);
