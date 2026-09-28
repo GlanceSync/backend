@@ -28,7 +28,6 @@ public class AuthService {
         this.emailVerification = emailVerification;
     }
 
-    /** Creates an unverified account and emails the link that activates it. */
     public User register(RegisterRequest raw) {
         RegisterRequest request = new RegisterRequest(trim(raw.email()), raw.username(),
                 trim(raw.firstName()), trim(raw.lastName()), raw.password(), raw.confirmPassword());
@@ -61,10 +60,6 @@ public class AuthService {
         return value == null ? null : value.trim();
     }
 
-    /**
-     * Verifies credentials. Failures are deliberately indistinguishable from each other,
-     * in both message and timing, so the endpoint cannot be used to enumerate usernames.
-     */
     public User login(String username, String password) {
         ApiException invalid = new ApiException(HttpStatus.UNAUTHORIZED, "Incorrect username or password.");
 
@@ -74,7 +69,6 @@ public class AuthService {
 
         User user = userDao.findByUsername(username).orElse(null);
         if (user == null) {
-            passwordHasher.wasteTime(password);
             throw invalid;
         }
 
@@ -82,7 +76,6 @@ public class AuthService {
             throw invalid;
         }
 
-        // Only reached with the right password, so it reveals nothing to a guesser.
         if (!user.emailVerified()) {
             throw new ApiException(HttpStatus.FORBIDDEN,
                     "Please confirm your email address first. We sent you a link when you signed up.");
