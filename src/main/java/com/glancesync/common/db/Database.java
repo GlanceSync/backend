@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -32,7 +33,7 @@ public class Database {
     }
 
     public <T> Optional<T> queryOne(String sql, RowMapper<T> mapper, Object... params) {
-        return query(sql, mapper, params).stream().findFirst();
+        return query(sql, mapper, params).stream().filter(Objects::nonNull).findFirst();
     }
 
     public <T> List<T> query(String sql, RowMapper<T> mapper, Object... params) {

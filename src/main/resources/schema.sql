@@ -1,5 +1,9 @@
 -- GlanceSync schema. Applied on startup; every statement is idempotent.
 
+-- Geography types and spatial indexes for location matching. The server must have
+-- PostGIS installed, and creating the extension needs a superuser the first time.
+CREATE EXTENSION IF NOT EXISTS postgis;
+
 CREATE TABLE IF NOT EXISTS users (
     id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username          VARCHAR(30)  NOT NULL,
@@ -18,8 +22,8 @@ CREATE TABLE IF NOT EXISTS users (
     birth_date        DATE,
 
     profile_picture_id UUID,
-    latitude            DOUBLE PRECISION,
-    longitude           DOUBLE PRECISION,
+    -- Longitude/latitude on the WGS 84 globe, so distances come out in metres.
+    location            GEOGRAPHY(Point, 4326),
     city                VARCHAR(100),
     -- gps | manual
     location_source     VARCHAR(8),
@@ -32,6 +36,9 @@ CREATE TABLE IF NOT EXISTS users (
     -- one interest are all set. Kept up to date by UserDao.refreshProfileCompleted.
     profile_completed BOOLEAN      NOT NULL DEFAULT false
 );
+
+-- Spatial index behind "everyone within N km".
+CREATE INDEX IF NOT EXISTS users_location_idx ON users USING GIST (location);
 
 -- Usernames and emails are unique case-insensitively, but stored as the user typed them.
 CREATE UNIQUE INDEX IF NOT EXISTS users_username_lower_key ON users (LOWER(username));

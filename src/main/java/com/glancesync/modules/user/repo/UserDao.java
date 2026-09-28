@@ -22,7 +22,7 @@ public class UserDao {
     private static final String SELECT_USER =
             "SELECT id, username, email, first_name, last_name, password_hash, email_verified_at, "
                     + "created_at, last_seen_at, profile_picture_id, gender, sexual_preference, biography, birth_date, "
-                    + "latitude, longitude, city, location_source, location_updated_at, fame_rating, "
+                    + "ST_Y(location::geometry) AS latitude, ST_X(location::geometry) AS longitude, city, location_source, location_updated_at, fame_rating, "
                     + "profile_completed FROM users ";
 
     private final Database database;
@@ -85,10 +85,25 @@ public class UserDao {
     }
 
     public void updateLocation(UUID userId, Double latitude, Double longitude, String city, LocationSource source) {
+        if (latitude == null || longitude == null) {
+            database.update(
+                    "UPDATE users SET location = NULL, city = ?, location_source = ?, "
+                            + "location_updated_at = now() WHERE id = ?",
+                    city, source.dbValue(), userId);
+            return;
+        }
         database.update(
-                "UPDATE users SET latitude = ?, longitude = ?, city = ?, location_source = ?, "
-                        + "location_updated_at = now() WHERE id = ?",
-                latitude, longitude, city, source.dbValue(), userId);
+                "UPDATE users SET location = ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, city = ?, "
+                        + "location_source = ?, location_updated_at = now() WHERE id = ?",
+                longitude, latitude, city, source.dbValue(), userId);
+    }
+
+    public Optional<Double> distanceMeters(UUID userA, UUID userB) {
+        return database.queryOne(
+                "SELECT ST_Distance(a.location, b.location) AS meters FROM users a, users b "
+                        + "WHERE a.id = ? AND b.id = ? AND a.location IS NOT NULL AND b.location IS NOT NULL",
+                rs -> rs.getObject("meters", Double.class),
+                userA, userB);
     }
 
     public void refreshProfileCompleted(UUID userId) {
