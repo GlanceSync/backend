@@ -3,12 +3,15 @@ package com.glancesync.modules.auth.controller;
 import com.glancesync.common.dto.ErrorResponse;
 import com.glancesync.common.exception.ApiException;
 import com.glancesync.modules.auth.dto.AuthResponse;
+import com.glancesync.modules.auth.dto.ForgotPasswordRequest;
+import com.glancesync.modules.auth.dto.ResetPasswordRequest;
 import com.glancesync.modules.auth.dto.LoginRequest;
 import com.glancesync.modules.auth.dto.RegisterRequest;
 import com.glancesync.modules.auth.dto.ResendVerificationRequest;
 import com.glancesync.modules.auth.dto.SessionResponse;
 import com.glancesync.modules.auth.service.AuthService;
 import com.glancesync.modules.auth.service.EmailVerificationService;
+import com.glancesync.modules.auth.service.PasswordResetService;
 import com.glancesync.modules.auth.service.TokenService;
 import com.glancesync.modules.security.filter.JwtAuthenticationFilter;
 import com.glancesync.modules.security.service.JwtService;
@@ -41,16 +44,18 @@ public class AuthController {
     private final RefreshTokenCookieService refreshCookie;
     private final UserDao userDao;
     private final EmailVerificationService emailVerification;
+    private final PasswordResetService passwordReset;
 
     public AuthController(AuthService authService, TokenService tokenService, JwtService jwtService,
                           RefreshTokenCookieService refreshCookie, UserDao userDao,
-                          EmailVerificationService emailVerification) {
+                          EmailVerificationService emailVerification, PasswordResetService passwordReset) {
         this.authService = authService;
         this.tokenService = tokenService;
         this.jwtService = jwtService;
         this.refreshCookie = refreshCookie;
         this.userDao = userDao;
         this.emailVerification = emailVerification;
+        this.passwordReset = passwordReset;
     }
 
     @Post(value = "/register", consumes = MediaType.APPLICATION_JSON)
@@ -59,7 +64,7 @@ public class AuthController {
             throw new ApiException(HttpStatus.BAD_REQUEST, "A request body is required.");
         }
         User user = authService.register(body);
-        return HttpResponse.created(new UserResponse(user.id(), user.username(), user.avatarUrl()));
+        return HttpResponse.created(UserResponse.of(user));
     }
 
     @Get("/verify-email")
@@ -74,6 +79,22 @@ public class AuthController {
         emailVerification.resend(body == null ? null : body.email());
         return HttpResponse.accepted().body(Map.of("message",
                 "If that address belongs to an unconfirmed account, a new link is on its way."));
+    }
+
+    @Post(value = "/forgot-password", consumes = MediaType.APPLICATION_JSON)
+    public HttpResponse<?> forgotPassword(@Body @Nullable ForgotPasswordRequest body) {
+        passwordReset.request(body == null ? null : body.email());
+        return HttpResponse.accepted().body(Map.of("message",
+                "If that address belongs to an account, a reset link is on its way."));
+    }
+
+    @Post(value = "/reset-password", consumes = MediaType.APPLICATION_JSON)
+    public HttpResponse<?> resetPassword(@Body @Nullable ResetPasswordRequest body) {
+        if (body == null) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "A request body is required.");
+        }
+        passwordReset.reset(body.token(), body.password(), body.confirmPassword());
+        return HttpResponse.noContent();
     }
 
     @Post(value = "/login", consumes = MediaType.APPLICATION_JSON)
@@ -106,7 +127,7 @@ public class AuthController {
         UserResponse user = JwtAuthenticationFilter.bearerToken(request)
                 .flatMap(jwtService::parseAccessToken)
                 .flatMap(userDao::findById)
-                .map(found -> new UserResponse(found.id(), found.username(), found.avatarUrl()))
+                .map(UserResponse::of)
                 .orElse(null);
         return new SessionResponse(user);
     }
@@ -114,7 +135,7 @@ public class AuthController {
     private HttpResponse<AuthResponse> withTokens(TokenService.Tokens tokens) {
         User user = tokens.user();
         AuthResponse body = new AuthResponse(tokens.accessToken(), tokenService.accessTokenExpiresInSeconds(),
-                new UserResponse(user.id(), user.username(), user.avatarUrl()));
+                UserResponse.of(user));
         return HttpResponse.ok(body).cookie(refreshCookie.build(tokens.refreshToken()));
     }
 }

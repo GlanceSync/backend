@@ -38,6 +38,11 @@ public class RefreshTokenDao {
         database.update("DELETE FROM refresh_tokens WHERE token_hash = ?", tokenHash);
     }
 
+    /** Signs the user out on every device. */
+    public void deleteAllFor(UUID userId) {
+        database.update("DELETE FROM refresh_tokens WHERE user_id = ?", userId);
+    }
+
     /** Housekeeping: rows for devices that never came back. */
     public void deleteExpiredFor(UUID userId) {
         database.update("DELETE FROM refresh_tokens WHERE user_id = ? AND expires_at <= now()", userId);
