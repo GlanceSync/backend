@@ -25,7 +25,13 @@ public class ReportService {
         this.fameService = fameService;
     }
 
-    /** Reporting twice is not an error; the first report stands. */
+    /**
+     * Reports a user as fake.
+     *
+     * @param reporterId The ID of the user reporting.
+     * @param reportedId The ID of the user being reported.
+     * @param rawReason The reason for the report.
+     */
     public void reportFake(UUID reporterId, UUID reportedId, String rawReason) {
         if (reporterId.equals(reportedId)) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "You cannot report yourself.");
