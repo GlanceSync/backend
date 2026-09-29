@@ -219,3 +219,20 @@ CREATE TABLE IF NOT EXISTS password_resets (
 );
 
 CREATE INDEX IF NOT EXISTS password_resets_user_id_idx ON password_resets (user_id);
+
+CREATE TABLE IF NOT EXISTS discovery_preferences (
+    user_id     UUID PRIMARY KEY REFERENCES users (id) ON DELETE CASCADE,
+    min_age     INTEGER,
+    max_age     INTEGER,
+    min_fame    INTEGER,
+    max_fame    INTEGER,
+    distance_km DOUBLE PRECISION,
+    city        VARCHAR(100),
+    -- Interest names, normalised like interests.name. People must have all of them.
+    tags        TEXT[]      NOT NULL DEFAULT '{}',
+    -- age | distance | fame | commonTags. NULL means the default ranking.
+    sort        VARCHAR(16),
+    -- asc | desc. NULL means the sort's natural direction.
+    sort_order  VARCHAR(4),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);

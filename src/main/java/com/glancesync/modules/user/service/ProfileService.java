@@ -2,6 +2,7 @@ package com.glancesync.modules.user.service;
 
 import java.util.UUID;
 import com.glancesync.common.exception.ApiException;
+import com.glancesync.common.geo.ApproximateDistance;
 import com.glancesync.modules.interest.entity.Interest;
 import com.glancesync.modules.interest.repo.InterestDao;
 import com.glancesync.modules.like.dto.LikeStatus;
@@ -33,7 +34,6 @@ public class ProfileService {
     public static final int MAX_AGE = 120;
     public static final int MAX_CITY_LENGTH = 100;
 
-    private static final double EARTH_RADIUS_KM = 6371.0;
 
     private final UserDao userDao;
     private final PictureDao pictureDao;
@@ -64,7 +64,7 @@ public class ProfileService {
                 self.age(), self.city(), self.fameRating(), presence.isOnline(selfId), self.lastSeenAt(),
                 interestNames(selfId), pictures(selfId),
                 self.birthDate(), self.latitude(), self.longitude(), self.locationSource(), self.profileCompleted(),
-                null, null, null, null);
+                null, null, null, null, null);
     }
 
     public ProfileResponse view(UUID selfId, UUID userId) {
@@ -76,12 +76,13 @@ public class ProfileService {
         viewService.record(self, userId);
 
         LikeStatus likes = likeService.status(selfId, userId);
+        Double meters = userDao.distanceMeters(selfId, userId).orElse(null);
         return new ProfileResponse(other.id(), other.username(), other.firstName(), other.lastName(),
                 other.avatarUrl(), other.gender(), other.sexualPreference(), other.biography(),
                 other.age(), other.city(), other.fameRating(), presence.isOnline(userId), other.lastSeenAt(),
                 interestNames(userId), pictures(userId),
                 null, null, null, null, null,
-                distanceKm(self, other), likes.likedByMe(), likes.likesMe(), likes.connected());
+                ApproximateDistance.km(meters), ApproximateDistance.label(meters), likes.likedByMe(), likes.likesMe(), likes.connected());
     }
 
     public ProfileResponse update(UUID selfId, ProfileRequest request) {
@@ -171,18 +172,5 @@ public class ProfileService {
 
     private static Double roundToNeighbourhood(Double coordinate) {
         return coordinate == null ? null : Math.round(coordinate * 100) / 100.0;
-    }
-
-    private static Double distanceKm(User a, User b) {
-        if (a.latitude() == null || b.latitude() == null) {
-            return null;
-        }
-        double lat1 = Math.toRadians(a.latitude());
-        double lat2 = Math.toRadians(b.latitude());
-        double dLat = lat2 - lat1;
-        double dLon = Math.toRadians(b.longitude() - a.longitude());
-        double h = Math.sin(dLat / 2) * Math.sin(dLat / 2)
-                + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        return (double) Math.round(2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(h)));
     }
 }

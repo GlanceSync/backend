@@ -2,6 +2,8 @@ package com.glancesync.modules.user.controller;
 
 import java.util.UUID;
 import com.glancesync.common.exception.ApiException;
+import com.glancesync.modules.discovery.entity.DiscoveryPreferences;
+import com.glancesync.modules.discovery.service.DiscoveryService;
 import com.glancesync.modules.security.filter.JwtAuthenticationFilter;
 import com.glancesync.modules.user.dto.LocationRequest;
 import com.glancesync.modules.user.dto.ProfileRequest;
@@ -23,9 +25,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class ProfileController {
 
     private final ProfileService profileService;
+    private final DiscoveryService discoveryService;
 
-    public ProfileController(ProfileService profileService) {
+    public ProfileController(ProfileService profileService, DiscoveryService discoveryService) {
         this.profileService = profileService;
+        this.discoveryService = discoveryService;
     }
 
     @Get("/me/profile")
@@ -46,6 +50,19 @@ public class ProfileController {
     @Put(value = "/me/location", consumes = MediaType.APPLICATION_JSON)
     public ProfileResponse updateLocation(HttpRequest<?> request, @Body @Nullable LocationRequest body) {
         return profileService.updateLocation(selfId(request), body);
+    }
+
+    /** The filters GET /api/users/discover applies. Fields never saved come back null. */
+    @Get("/me/preferences")
+    public DiscoveryPreferences preferences(HttpRequest<?> request) {
+        return discoveryService.preferences(selfId(request));
+    }
+
+    /** Replaces all saved filters at once; a field left out is cleared. */
+    @Put(value = "/me/preferences", consumes = MediaType.APPLICATION_JSON)
+    public DiscoveryPreferences savePreferences(HttpRequest<?> request,
+                                                @Body @Nullable DiscoveryPreferences body) {
+        return discoveryService.savePreferences(selfId(request), body);
     }
 
     private UUID selfId(HttpRequest<?> request) {
