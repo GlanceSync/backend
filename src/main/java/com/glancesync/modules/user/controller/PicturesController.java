@@ -21,12 +21,9 @@ import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.Put;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import java.net.URI;
 import java.util.List;
 
-/**
- * Profile pictures. Uploads are the raw image bytes; the list endpoints return metadata
- * and each picture's URL. Writes return the caller's full, updated list.
- */
 @Tag(name = "Pictures")
 @Controller("/api/users")
 public class PicturesController {
@@ -47,14 +44,19 @@ public class PicturesController {
         return toResponses(pictureService.forUser(userId));
     }
 
-    /** Public, so it works as an <img> src. The bytes behind an id never change. */
+    /**
+     * Public, so it works as an <img> src. The bytes behind an id never change. A picture
+     * hosted on the internet is a redirect to its URL.
+     */
     @Get("/{userId}/pictures/{pictureId}")
     public HttpResponse<byte[]> show(@PathVariable UUID userId, @PathVariable UUID pictureId) {
         return pictureService.data(userId, pictureId)
-                .map(picture -> HttpResponse.ok(picture.data())
-                        .contentType(picture.contentType())
-                        .header("Cache-Control", "private, max-age=31536000, immutable")
-                        .header("X-Content-Type-Options", "nosniff"))
+                .map(picture -> picture.externalUrl() != null
+                        ? HttpResponse.<byte[]>redirect(URI.create(picture.externalUrl()))
+                        : HttpResponse.ok(picture.data())
+                                .contentType(picture.contentType())
+                                .header("X-Content-Type-Options", "nosniff"))
+                .map(response -> response.header("Cache-Control", "private, max-age=31536000, immutable"))
                 .orElseGet(HttpResponse::notFound);
     }
 

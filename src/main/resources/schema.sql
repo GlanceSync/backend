@@ -141,12 +141,16 @@ CREATE TABLE IF NOT EXISTS blocks (
 
 CREATE INDEX IF NOT EXISTS blocks_blocked_idx ON blocks (blocked_id);
 
+-- A picture is either uploaded, with its bytes on disk under IMG_STORAGE_PATH (see
+-- PictureStorage) and content_type set, or hosted elsewhere, with external_url set and
+-- served as a redirect.
 CREATE TABLE IF NOT EXISTS user_pictures (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id      UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    content_type VARCHAR(20) NOT NULL,
-    data         BYTEA       NOT NULL,
-    created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+    content_type VARCHAR(20),
+    external_url TEXT,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CHECK ((content_type IS NULL) <> (external_url IS NULL))
 );
 
 CREATE INDEX IF NOT EXISTS user_pictures_user_idx ON user_pictures (user_id, created_at);

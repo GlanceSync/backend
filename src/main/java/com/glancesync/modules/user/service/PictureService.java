@@ -6,6 +6,7 @@ import com.glancesync.modules.user.entity.Picture;
 import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.PictureDao;
 import com.glancesync.modules.user.repo.UserDao;
+import com.glancesync.modules.user.storage.PictureStorage;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import jakarta.inject.Singleton;
@@ -16,7 +17,9 @@ import java.util.Optional;
 /**
  * Up to {@value #MAX_PER_USER} pictures per user, one of which is the profile picture.
  * Whenever a user has pictures, one of them is the profile picture: the first upload
- * becomes it, and deleting it promotes the oldest one left.
+ * becomes it, and deleting it promotes the oldest one left. Uploaded bytes are kept on disk
+ * by {@link PictureStorage}; a picture can also point at an image on the internet (the seed
+ * data does), which is served as a redirect.
  */
 @Singleton
 public class PictureService {
@@ -26,10 +29,16 @@ public class PictureService {
 
     private final PictureDao pictureDao;
     private final UserDao userDao;
+    private final PictureStorage storage;
 
-    public PictureService(PictureDao pictureDao, UserDao userDao) {
+    /** Either the stored bytes, or {@code externalUrl} to redirect to. */
+    public record PictureData(String contentType, byte[] data, String externalUrl) {
+    }
+
+    public PictureService(PictureDao pictureDao, UserDao userDao, PictureStorage storage) {
         this.pictureDao = pictureDao;
         this.userDao = userDao;
+        this.storage = storage;
     }
 
     public List<Picture> forUser(UUID userId) {
@@ -37,8 +46,14 @@ public class PictureService {
         return pictureDao.forUser(userId);
     }
 
-    public Optional<PictureDao.PictureData> data(UUID userId, UUID pictureId) {
-        return pictureDao.findData(userId, pictureId);
+    public Optional<PictureData> data(UUID userId, UUID pictureId) {
+        return pictureDao.findSource(userId, pictureId).flatMap(source -> {
+            if (source.externalUrl() != null) {
+                return Optional.of(new PictureData(null, null, source.externalUrl()));
+            }
+            return storage.read(userId, pictureId)
+                    .map(bytes -> new PictureData(source.contentType(), bytes, null));
+        });
     }
 
     public List<Picture> add(UUID selfId, byte[] body) {
@@ -46,7 +61,7 @@ public class PictureService {
         if (pictureDao.countForUser(selfId) >= MAX_PER_USER) {
             throw tooMany();
         }
-        pictureDao.add(selfId, contentType, body);
+        store(selfId, contentType, body);
         pictureDao.ensureProfile(selfId);
         userDao.refreshProfileCompleted(selfId);
         return pictureDao.forUser(selfId);
@@ -63,6 +78,7 @@ public class PictureService {
         if (pictureDao.delete(selfId, pictureId) == 0) {
             throw notFound();
         }
+        storage.delete(selfId, pictureId);
         pictureDao.ensureProfile(selfId);
         userDao.refreshProfileCompleted(selfId);
         return pictureDao.forUser(selfId);
@@ -74,10 +90,11 @@ public class PictureService {
         if (previous == null && pictureDao.countForUser(selfId) >= MAX_PER_USER) {
             throw tooMany();
         }
-        UUID added = pictureDao.add(selfId, contentType, body);
+        UUID added = store(selfId, contentType, body);
         pictureDao.setProfile(selfId, added);
         if (previous != null) {
             pictureDao.delete(selfId, previous);
+            storage.delete(selfId, previous);
         }
         userDao.refreshProfileCompleted(selfId);
         return requireUser(selfId);
@@ -87,10 +104,24 @@ public class PictureService {
         UUID current = requireUser(selfId).profilePictureId();
         if (current != null) {
             pictureDao.delete(selfId, current);
+            storage.delete(selfId, current);
             pictureDao.ensureProfile(selfId);
             userDao.refreshProfileCompleted(selfId);
         }
         return requireUser(selfId);
+    }
+
+    /** File first, then the row, so a row never points at a missing file. */
+    private UUID store(UUID userId, String contentType, byte[] body) {
+        UUID pictureId = UUID.randomUUID();
+        storage.write(userId, pictureId, body);
+        try {
+            pictureDao.add(pictureId, userId, contentType);
+        } catch (RuntimeException e) {
+            storage.delete(userId, pictureId);
+            throw e;
+        }
+        return pictureId;
     }
 
     private User requireUser(UUID userId) {
