@@ -186,6 +186,7 @@ CREATE TABLE IF NOT EXISTS likes (
     liker_id   UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     liked_id   UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    unliked_at TIMESTAMPTZ,
     PRIMARY KEY (liker_id, liked_id),
     CONSTRAINT likes_not_self CHECK (liker_id <> liked_id)
 );

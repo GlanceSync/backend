@@ -198,7 +198,7 @@ public class RealtimeSocket {
 
     private void handleCallOffer(UUID callerId, RealtimeMessages.Inbound inbound) {
         UUID calleeId = inbound.targetUserId();
-        if (calleeId == null || calleeId == callerId) {
+        if (calleeId == null || calleeId.equals(callerId)) {
             send(callerId, new RealtimeMessages.CallEnded(null, "invalid"));
             return;
         }
@@ -208,6 +208,12 @@ public class RealtimeSocket {
         }
         if (blocks.isBlockedEitherWay(callerId, calleeId)) {
             send(callerId, new RealtimeMessages.CallEnded(null, "blocked"));
+            return;
+        }
+        try {
+            chatService.assertConnected(callerId, calleeId);
+        } catch (ApiException e) {
+            send(callerId, new RealtimeMessages.CallEnded(null, "not_connected"));
             return;
         }
 

@@ -1,6 +1,8 @@
 package com.glancesync.modules.notification.service;
 
 import java.util.UUID;
+import com.glancesync.modules.block.repo.BlockDao;
+import com.glancesync.modules.like.repo.LikeDao;
 import com.glancesync.modules.notification.entity.Notification;
 import com.glancesync.modules.notification.repo.NotificationDao;
 import com.glancesync.modules.realtime.dto.RealtimeMessages;
@@ -8,6 +10,7 @@ import com.glancesync.modules.realtime.service.RealtimePush;
 import jakarta.inject.Singleton;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Creates notifications and pushes them immediately. Every notification is stored
@@ -31,15 +34,32 @@ public class NotificationService {
 
     private static final int RECENT_LIMIT = 50;
 
+    /** Being told about a block is the one thing a block must not silence. */
+    private static final Set<String> SENT_DESPITE_BLOCK = Set.of(TYPE_USER_BLOCKED, TYPE_USER_UNBLOCKED);
+
+    // The DAOs rather than BlockService: BlockService itself depends on this class.
     private final NotificationDao notificationDao;
     private final RealtimePush push;
+    private final BlockDao blockDao;
+    private final LikeDao likeDao;
 
-    public NotificationService(NotificationDao notificationDao, RealtimePush push) {
+    public NotificationService(NotificationDao notificationDao, RealtimePush push,
+                               BlockDao blockDao, LikeDao likeDao) {
         this.notificationDao = notificationDao;
         this.push = push;
+        this.blockDao = blockDao;
+        this.likeDao = likeDao;
     }
 
+    /**
+     * Stores and pushes a notification, unless the recipient should not hear from this
+     * actor: they are blocked either way, or the recipient has unliked them. Checked
+     * here so no caller can forget.
+     */
     public void notify(UUID userId, String type, UUID actorId, String body) {
+        if (actorId != null && isMuted(userId, type, actorId)) {
+            return;
+        }
         UUID id = notificationDao.insert(userId, type, actorId, body);
         notificationDao.findById(id).ifPresent(notification ->
                 push.toUser(userId, new RealtimeMessages.NotificationNew(notification)));
@@ -57,6 +77,13 @@ public class NotificationService {
     public void markAllRead(UUID userId) {
         notificationDao.markAllRead(userId);
         pushUnreadCount(userId);
+    }
+
+    private boolean isMuted(UUID userId, String type, UUID actorId) {
+        if (!SENT_DESPITE_BLOCK.contains(type) && blockDao.blockedEitherWay(userId, actorId)) {
+            return true;
+        }
+        return likeDao.hasUnliked(userId, actorId);
     }
 
     /** Keeps the bell in the header correct on every open tab. */

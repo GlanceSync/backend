@@ -86,7 +86,7 @@ public class DiscoveryDao {
         params.add(viewer.id());
         params.add(viewer.id());
 
-        sql.append("AND NOT EXISTS (SELECT 1 FROM likes l WHERE l.liker_id = ? AND l.liked_id = u.id) ");
+        sql.append("AND NOT EXISTS (SELECT 1 FROM likes l WHERE l.liker_id = ? AND l.liked_id = u.id AND l.unliked_at IS NULL) ");
         params.add(viewer.id());
         appendOrientation(sql, params, viewer);
 

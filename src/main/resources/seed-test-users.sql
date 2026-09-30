@@ -10164,10 +10164,10 @@ WHERE email LIKE '%@glancesync.test';
 -- Same formula as FameService: +1 per viewer, +5 per like, +10 per connection, -20 per report.
 UPDATE users SET fame_rating = GREATEST(0,
       1 * (SELECT COUNT(*) FROM profile_views WHERE viewed_id = users.id)
-    + 5 * (SELECT COUNT(*) FROM likes WHERE liked_id = users.id)
+    + 5 * (SELECT COUNT(*) FROM likes WHERE liked_id = users.id AND unliked_at IS NULL)
     + 10 * (SELECT COUNT(*) FROM likes l JOIN likes back
-            ON back.liker_id = l.liked_id AND back.liked_id = l.liker_id
-            WHERE l.liked_id = users.id)
+            ON back.liker_id = l.liked_id AND back.liked_id = l.liker_id AND back.unliked_at IS NULL
+            WHERE l.liked_id = users.id AND l.unliked_at IS NULL)
     - 20 * (SELECT COUNT(*) FROM reports WHERE reported_id = users.id))
 WHERE email LIKE '%@glancesync.test';
 
