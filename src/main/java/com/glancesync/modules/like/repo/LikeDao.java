@@ -7,6 +7,7 @@ import com.glancesync.modules.user.entity.User;
 import jakarta.inject.Singleton;
 
 import java.util.List;
+import java.util.Set;
 
 @Singleton
 public class LikeDao {
@@ -32,6 +33,17 @@ public class LikeDao {
                 "SELECT 1 FROM likes WHERE liker_id = ? AND liked_id = ?",
                 rs -> true,
                 likerId, likedId).isPresent();
+    }
+
+    /** Everyone this user is connected with: both of them liked each other. */
+    public Set<UUID> connectionsOf(UUID userId) {
+        List<UUID> ids = database.query(
+                "SELECT l.liked_id FROM likes l "
+                        + "JOIN likes back ON back.liker_id = l.liked_id AND back.liked_id = l.liker_id "
+                        + "WHERE l.liker_id = ?",
+                rs -> rs.getObject("liked_id", UUID.class),
+                userId);
+        return Set.copyOf(ids);
     }
 
     public List<ActivityResponse> likedBy(UUID userId) {
