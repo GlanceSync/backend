@@ -25,8 +25,8 @@ import java.util.Map;
  * and anyone the viewer already liked, and matches orientation both ways.
  *
  * Without a sort, results are ranked: people in the viewer's area first (within
- * {@value DiscoveryDao#SAME_AREA_KM} km or the same city), then most shared tags, then
- * highest fame, then nearest.
+ * {@value DiscoveryDao#SAME_AREA_KM} km or the same city), then by a match score that weighs
+ * shared tags, fame and distance together.
  */
 @Singleton
 public class DiscoveryService {
@@ -75,6 +75,9 @@ public class DiscoveryService {
      */
     public List<DiscoveryCard> discover(UUID selfId, DiscoveryPreferences overrides, Integer limit, Integer offset) {
         User viewer = requireUser(selfId);
+        if (!viewer.profileCompleted()) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Complete your profile to discover people.");
+        }
         DiscoveryPreferences saved = preferences(selfId);
         DiscoveryPreferences criteria = normalise(saved.overriddenBy(normalise(overrides)));
 
@@ -84,8 +87,7 @@ public class DiscoveryService {
                         "Share your location with coordinates to filter by distance, or use a city.");
             }
             // A saved distance from before the user switched to a city-only location.
-            criteria = new DiscoveryPreferences(criteria.minAge(), criteria.maxAge(), criteria.minFame(),
-                    criteria.maxFame(), null, criteria.city(), criteria.tags(), criteria.sort(), criteria.order());
+            criteria = criteria.withoutDistance();
         }
 
         DiscoveryFilters filters = toFilters(criteria, page(limit, offset));
@@ -140,6 +142,10 @@ public class DiscoveryService {
             throw invalid("tags", "Filter by at most " + MAX_TAGS + " tags.");
         }
 
+        if (p.minCommonTags() != null && p.minCommonTags() < 0) {
+            throw invalid("minCommonTags", "The number of common tags cannot be negative.");
+        }
+
         DiscoverySort sort = parseSort(p.sort());
         String order = p.order() == null || p.order().isBlank() ? null : p.order().trim().toLowerCase(Locale.ROOT);
         if (order != null && !order.equals("asc") && !order.equals("desc")) {
@@ -147,7 +153,7 @@ public class DiscoveryService {
         }
 
         return new DiscoveryPreferences(minAge, maxAge, p.minFame(), p.maxFame(), p.distance(), city, tags,
-                sort == null ? null : sort.paramName(), order);
+                p.minCommonTags(), sort == null ? null : sort.paramName(), order);
     }
 
     private record Page(int limit, int offset) {
@@ -171,7 +177,7 @@ public class DiscoveryService {
                 ? sort == null || sort.ascendingByDefault()
                 : p.order().equals("asc");
         return new DiscoveryFilters(p.minAge(), p.maxAge(), p.minFame(), p.maxFame(), p.distance(), p.city(),
-                p.tags(), sort, ascending, page.limit(), page.offset());
+                p.tags(), p.minCommonTags(), sort, ascending, page.limit(), page.offset());
     }
 
     /** age | distance | fame | commonTags, case-insensitive. */

@@ -32,12 +32,13 @@ public class DiscoveryController {
                                         @QueryValue @Nullable Integer minAge, @QueryValue @Nullable Integer maxAge,
                                         @QueryValue @Nullable Integer minFame, @QueryValue @Nullable Integer maxFame,
                                         @QueryValue @Nullable Double distance, @QueryValue @Nullable String city,
-                                        @QueryValue @Nullable String tags, @QueryValue @Nullable String sort,
+                                        @QueryValue @Nullable String tags, @QueryValue @Nullable Integer minCommonTags,
+                                        @QueryValue @Nullable String sort,
                                         @QueryValue @Nullable String order, @QueryValue @Nullable Integer limit,
                                         @QueryValue @Nullable Integer offset) {
         List<String> tagList = tags == null ? List.of() : Arrays.asList(tags.split(","));
         DiscoveryPreferences overrides = new DiscoveryPreferences(minAge, maxAge, minFame, maxFame, distance, city,
-                tagList, sort, order);
+                tagList, minCommonTags, sort, order);
         return discoveryService.discover(selfId(request), overrides, limit, offset);
     }
 

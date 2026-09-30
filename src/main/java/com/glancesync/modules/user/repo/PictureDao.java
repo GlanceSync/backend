@@ -58,6 +58,12 @@ public class PictureDao {
                 pictureId, userId, contentType);
     }
 
+    public void addExternal(UUID pictureId, UUID userId, String externalUrl) {
+        database.update(
+                "INSERT INTO user_pictures (id, user_id, external_url) VALUES (?, ?, ?)",
+                pictureId, userId, externalUrl);
+    }
+
     public int setProfile(UUID userId, UUID pictureId) {
         return database.update(
                 "UPDATE users SET profile_picture_id = p.id FROM user_pictures p "

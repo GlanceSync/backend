@@ -15,7 +15,15 @@ import java.util.List;
 public class DiscoveryDao {
 
     /** Within this distance, or in the same city, counts as "your area". */
-    public static final double SAME_AREA_KM = 50000; // metres
+    public static final int SAME_AREA_KM = 50;
+
+    // Match score for the default ranking: points per shared tag, plus a little per fame
+    // point, minus a little per km of distance.
+    static final double SCORE_PER_COMMON_TAG = 10;
+    static final double SCORE_PER_FAME = 0.1;
+    static final double SCORE_LOST_PER_KM = 0.1;
+    /** Distance stops costing more past this, and people without one are treated as this far. */
+    static final double SCORE_DISTANCE_CAP_KM = 200;
 
     public record Row(UUID id, String username, UUID profilePictureId, Gender gender, Integer age, String city,
                       Double distanceMeters, int fameRating, int commonTags) {
@@ -49,19 +57,28 @@ public class DiscoveryDao {
                 + "EXTRACT(YEAR FROM age(current_date, u.birth_date))::int AS age, "
                 + "ST_Distance(u.location, me.location) AS distance_m, ");
 
-        sql.append("(SELECT COUNT(*) FROM user_interests theirs JOIN user_interests mine "
-                + "ON mine.interest_id = theirs.interest_id "
-                + "WHERE theirs.user_id = u.id AND mine.user_id = ?)::int AS common_tags, ");
-        params.add(viewer.id());
+        sql.append("common.common_tags, ");
+        sql.append("? * common.common_tags + ? * u.fame_rating "
+                + "- ? * COALESCE(LEAST(ST_Distance(u.location, me.location) / 1000, ?), ?) AS score, ");
+        params.add(SCORE_PER_COMMON_TAG);
+        params.add(SCORE_PER_FAME);
+        params.add(SCORE_LOST_PER_KM);
+        params.add(SCORE_DISTANCE_CAP_KM);
+        params.add(SCORE_DISTANCE_CAP_KM);
 
         // COALESCE: a NULL here would sort before true in DESC order.
         sql.append("COALESCE(ST_DWithin(u.location, me.location, ?) "
                 + "OR (u.city IS NOT NULL AND LOWER(u.city) = LOWER(CAST(? AS text))), false) AS same_area ");
-        params.add(SAME_AREA_KM);
+        params.add(SAME_AREA_KM * 1000);
         params.add(viewer.city());
 
         // --- Who can appear at all ------------------------------------------------------
-        sql.append("FROM users u CROSS JOIN me WHERE u.id <> ? AND u.profile_completed ");
+        sql.append("FROM users u CROSS JOIN me CROSS JOIN LATERAL ("
+                + "SELECT COUNT(*)::int AS common_tags FROM user_interests theirs JOIN user_interests mine "
+                + "ON mine.interest_id = theirs.interest_id "
+                + "WHERE theirs.user_id = u.id AND mine.user_id = ?) common ");
+        params.add(viewer.id());
+        sql.append("WHERE u.id <> ? AND u.profile_completed ");
         params.add(viewer.id());
 
         sql.append("AND NOT EXISTS (SELECT 1 FROM blocks b WHERE (b.blocker_id = ? AND b.blocked_id = u.id) "
@@ -108,6 +125,10 @@ public class DiscoveryDao {
             params.add(filters.tags().toArray(String[]::new));
             params.add(filters.tags().size());
         }
+        if (filters.minCommonTags() != null) {
+            sql.append("AND common.common_tags >= ? ");
+            params.add(filters.minCommonTags());
+        }
         sql.append(") c ");
 
         // --- Order and page ---------------------------------------------------------------
@@ -118,7 +139,7 @@ public class DiscoveryDao {
             sql.append("ORDER BY c.same_area DESC, ");
         }
         // Default ranking, and tie-breakers after an explicit sort.
-        sql.append("c.common_tags DESC, c.fame_rating DESC, c.distance_m ASC NULLS LAST, c.id ");
+        sql.append("c.score DESC, c.distance_m ASC NULLS LAST, c.id ");
         sql.append("LIMIT ? OFFSET ?");
         params.add(filters.limit());
         params.add(filters.offset());

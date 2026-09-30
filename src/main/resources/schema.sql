@@ -234,6 +234,8 @@ CREATE TABLE IF NOT EXISTS discovery_preferences (
     city        VARCHAR(100),
     -- Interest names, normalised like interests.name. People must have all of them.
     tags        TEXT[]      NOT NULL DEFAULT '{}',
+    -- Only people sharing at least this many interests with the user.
+    min_common_tags INTEGER,
     -- age | distance | fame | commonTags. NULL means the default ranking.
     sort        VARCHAR(16),
     -- asc | desc. NULL means the sort's natural direction.
