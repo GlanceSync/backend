@@ -7,6 +7,7 @@ import com.glancesync.modules.call.repo.CallDao;
 import com.glancesync.modules.chat.dto.ChatEntry;
 import com.glancesync.modules.chat.entity.Message;
 import com.glancesync.modules.chat.repo.MessageDao;
+import com.glancesync.modules.like.service.LikeService;
 import com.glancesync.modules.user.repo.UserDao;
 import io.micronaut.http.HttpStatus;
 import jakarta.inject.Singleton;
@@ -28,12 +29,22 @@ public class ChatService {
     private final CallDao callDao;
     private final UserDao userDao;
     private final BlockService blocks;
+    private final LikeService likes;
 
-    public ChatService(MessageDao messageDao, CallDao callDao, UserDao userDao, BlockService blocks) {
+    public ChatService(MessageDao messageDao, CallDao callDao, UserDao userDao, BlockService blocks,
+                       LikeService likes) {
         this.messageDao = messageDao;
         this.callDao = callDao;
         this.userDao = userDao;
         this.blocks = blocks;
+        this.likes = likes;
+    }
+
+    /** Chat and calls are only open between connected users: both liked each other. */
+    public void assertConnected(UUID selfId, UUID otherUserId) {
+        if (!likes.isConnected(selfId, otherUserId)) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "You can only talk to people you are connected with.");
+        }
     }
 
     /**
@@ -53,6 +64,7 @@ public class ChatService {
         }
         // Checked in both directions: blocking stops contact each way.
         blocks.assertNotBlocked(senderId, recipientId);
+        assertConnected(senderId, recipientId);
 
         String body = rawBody == null ? "" : rawBody.trim();
         if (body.isEmpty()) {
@@ -77,6 +89,7 @@ public class ChatService {
         if (userDao.findById(otherUserId).isEmpty()) {
             throw new ApiException(HttpStatus.NOT_FOUND, "That person no longer exists.");
         }
+        assertConnected(selfId, otherUserId);
 
         List<ChatEntry> timeline = new ArrayList<>();
         messageDao.conversation(selfId, otherUserId, HISTORY_LIMIT)

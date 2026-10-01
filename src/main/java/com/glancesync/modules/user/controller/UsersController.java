@@ -7,6 +7,7 @@ import com.glancesync.modules.block.repo.BlockDao;
 import com.glancesync.modules.block.service.BlockService;
 import com.glancesync.modules.chat.entity.Message;
 import com.glancesync.modules.chat.repo.MessageDao;
+import com.glancesync.modules.like.repo.LikeDao;
 import com.glancesync.modules.realtime.service.PresenceRegistry;
 import com.glancesync.modules.user.dto.PersonResponse;
 import com.glancesync.modules.user.repo.UserDao;
@@ -32,18 +33,21 @@ public class UsersController {
     private final MessageDao messageDao;
     private final BlockDao blockDao;
     private final BlockService blockService;
+    private final LikeDao likeDao;
 
     public UsersController(UserDao userDao, PresenceRegistry presence, MessageDao messageDao,
-                           BlockDao blockDao, BlockService blockService) {
+                           BlockDao blockDao, BlockService blockService, LikeDao likeDao) {
         this.userDao = userDao;
         this.presence = presence;
         this.messageDao = messageDao;
         this.blockDao = blockDao;
         this.blockService = blockService;
+        this.likeDao = likeDao;
     }
 
     /**
-     * The people list. Presence is read from the live socket registry, so the initial
+     * The people list: only the people this user is connected with (a mutual like),
+     * since those are the only conversations worth offering. Presence is read from the live socket registry, so the initial
      * page load and the subsequent WebSocket updates agree with each other.
      */
     @Get
@@ -54,8 +58,10 @@ public class UsersController {
         Map<UUID, Message> latest = messageDao.latestPerCounterpart(selfId);
         Set<UUID> iBlocked = blockDao.blockedBy(selfId);
         Set<UUID> blockedMe = blockDao.blockersOf(selfId);
+        Set<UUID> connections = likeDao.connectionsOf(selfId);
 
         return userDao.findAllExcept(selfId).stream()
+                .filter(user -> connections.contains(user.id()))
                 .map(user -> {
                     Message last = latest.get(user.id());
                     return new PersonResponse(
@@ -66,7 +72,7 @@ public class UsersController {
                             user.lastSeenAt(),
                             last == null ? null : last.body(),
                             last == null ? null : last.createdAt(),
-                            last == null ? null : last.senderId() == selfId,
+                            last == null ? null : last.senderId().equals(selfId),
                             iBlocked.contains(user.id()),
                             blockedMe.contains(user.id()));
                 })

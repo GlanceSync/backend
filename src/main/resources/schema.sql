@@ -149,12 +149,16 @@ CREATE TABLE IF NOT EXISTS blocks (
 
 CREATE INDEX IF NOT EXISTS blocks_blocked_idx ON blocks (blocked_id);
 
+-- A picture is either uploaded, with its bytes on disk under IMG_STORAGE_PATH (see
+-- PictureStorage) and content_type set, or hosted elsewhere, with external_url set and
+-- served as a redirect.
 CREATE TABLE IF NOT EXISTS user_pictures (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id      UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    content_type VARCHAR(20) NOT NULL,
-    data         BYTEA       NOT NULL,
-    created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+    content_type VARCHAR(20),
+    external_url TEXT,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CHECK ((content_type IS NULL) <> (external_url IS NULL))
 );
 
 CREATE INDEX IF NOT EXISTS user_pictures_user_idx ON user_pictures (user_id, created_at);
@@ -190,6 +194,7 @@ CREATE TABLE IF NOT EXISTS likes (
     liker_id   UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     liked_id   UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    unliked_at TIMESTAMPTZ,
     PRIMARY KEY (liker_id, liked_id),
     CONSTRAINT likes_not_self CHECK (liker_id <> liked_id)
 );
@@ -227,3 +232,22 @@ CREATE TABLE IF NOT EXISTS password_resets (
 );
 
 CREATE INDEX IF NOT EXISTS password_resets_user_id_idx ON password_resets (user_id);
+
+CREATE TABLE IF NOT EXISTS discovery_preferences (
+    user_id     UUID PRIMARY KEY REFERENCES users (id) ON DELETE CASCADE,
+    min_age     INTEGER,
+    max_age     INTEGER,
+    min_fame    INTEGER,
+    max_fame    INTEGER,
+    distance_km DOUBLE PRECISION,
+    city        VARCHAR(100),
+    -- Interest names, normalised like interests.name. People must have all of them.
+    tags        TEXT[]      NOT NULL DEFAULT '{}',
+    -- Only people sharing at least this many interests with the user.
+    min_common_tags INTEGER,
+    -- age | distance | fame | commonTags. NULL means the default ranking.
+    sort        VARCHAR(16),
+    -- asc | desc. NULL means the sort's natural direction.
+    sort_order  VARCHAR(4),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);

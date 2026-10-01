@@ -37,8 +37,8 @@ public class ProfileViewDao {
     public List<ActivityResponse> viewersOf(UUID userId) {
         return database.query(
                 "SELECT u.id, u.username, u.profile_picture_id, v.last_viewed_at, "
-                        + "(EXISTS (SELECT 1 FROM likes a WHERE a.liker_id = v.viewer_id AND a.liked_id = v.viewed_id) "
-                        + " AND EXISTS (SELECT 1 FROM likes b WHERE b.liker_id = v.viewed_id AND b.liked_id = v.viewer_id)) "
+                        + "(EXISTS (SELECT 1 FROM likes a WHERE a.liker_id = v.viewer_id AND a.liked_id = v.viewed_id AND a.unliked_at IS NULL) "
+                        + " AND EXISTS (SELECT 1 FROM likes b WHERE b.liker_id = v.viewed_id AND b.liked_id = v.viewer_id AND b.unliked_at IS NULL)) "
                         + "AS connected "
                         + "FROM profile_views v JOIN users u ON u.id = v.viewer_id "
                         + "WHERE v.viewed_id = ? AND NOT EXISTS (SELECT 1 FROM blocks b "

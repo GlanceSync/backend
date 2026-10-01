@@ -22,10 +22,10 @@ public class FameService {
         database.update(
                 "UPDATE users SET fame_rating = GREATEST(0, "
                         + "  ? * (SELECT COUNT(*) FROM profile_views WHERE viewed_id = users.id)"
-                        + "+ ? * (SELECT COUNT(*) FROM likes WHERE liked_id = users.id)"
+                        + "+ ? * (SELECT COUNT(*) FROM likes WHERE liked_id = users.id AND unliked_at IS NULL)"
                         + "+ ? * (SELECT COUNT(*) FROM likes l JOIN likes back"
-                        + "       ON back.liker_id = l.liked_id AND back.liked_id = l.liker_id"
-                        + "       WHERE l.liked_id = users.id)"
+                        + "       ON back.liker_id = l.liked_id AND back.liked_id = l.liker_id AND back.unliked_at IS NULL"
+                        + "       WHERE l.liked_id = users.id AND l.unliked_at IS NULL)"
                         + "+ ? * (SELECT COUNT(*) FROM reports WHERE reported_id = users.id)"
                         + ") WHERE id = ?",
                 POINTS_PER_VIEWER, POINTS_PER_LIKE, POINTS_PER_CONNECTION, POINTS_PER_REPORT, userId);
