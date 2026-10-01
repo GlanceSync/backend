@@ -2,6 +2,7 @@ package com.glancesync.modules.event.service;
 
 import java.util.UUID;
 import com.glancesync.common.exception.ApiException;
+import com.glancesync.modules.block.service.BlockService;
 import com.glancesync.modules.event.entity.Event;
 import com.glancesync.modules.event.repo.EventDao;
 import com.glancesync.modules.notification.service.NotificationService;
@@ -26,11 +27,14 @@ public class EventService {
     private final EventDao eventDao;
     private final UserDao userDao;
     private final NotificationService notifications;
+    private final BlockService blocks;
 
-    public EventService(EventDao eventDao, UserDao userDao, NotificationService notifications) {
+    public EventService(EventDao eventDao, UserDao userDao, NotificationService notifications,
+                        BlockService blocks) {
         this.eventDao = eventDao;
         this.userDao = userDao;
         this.notifications = notifications;
+        this.blocks = blocks;
     }
 
     public List<Event> forUser(UUID userId) {
@@ -45,6 +49,7 @@ public class EventService {
         if (userDao.findById(inviteeId).isEmpty()) {
             throw new ApiException(HttpStatus.NOT_FOUND, "That person no longer exists.");
         }
+        blocks.assertNotBlocked(organizerId, inviteeId);
 
         String title = trimmed(rawTitle);
         if (title.isEmpty()) {

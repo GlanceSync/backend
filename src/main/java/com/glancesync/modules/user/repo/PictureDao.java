@@ -12,7 +12,8 @@ import java.util.Optional;
 @Singleton
 public class PictureDao {
 
-    public record PictureData(String contentType, byte[] data) {
+    /** Where a picture's bytes are: on disk ({@code contentType}) or on the internet ({@code externalUrl}). */
+    public record PictureSource(String contentType, String externalUrl) {
     }
 
     private final Database database;
@@ -37,10 +38,10 @@ public class PictureDao {
                 userId);
     }
 
-    public Optional<PictureData> findData(UUID userId, UUID pictureId) {
+    public Optional<PictureSource> findSource(UUID userId, UUID pictureId) {
         return database.queryOne(
-                "SELECT content_type, data FROM user_pictures WHERE id = ? AND user_id = ?",
-                rs -> new PictureData(rs.getString("content_type"), rs.getBytes("data")),
+                "SELECT content_type, external_url FROM user_pictures WHERE id = ? AND user_id = ?",
+                rs -> new PictureSource(rs.getString("content_type"), rs.getString("external_url")),
                 pictureId, userId);
     }
 
@@ -51,10 +52,16 @@ public class PictureDao {
                 userId).orElse(0);
     }
 
-    public UUID add(UUID userId, String contentType, byte[] data) {
-        return database.insertReturningId(
-                "INSERT INTO user_pictures (user_id, content_type, data) VALUES (?, ?, ?)",
-                userId, contentType, data);
+    public void add(UUID pictureId, UUID userId, String contentType) {
+        database.update(
+                "INSERT INTO user_pictures (id, user_id, content_type) VALUES (?, ?, ?)",
+                pictureId, userId, contentType);
+    }
+
+    public void addExternal(UUID pictureId, UUID userId, String externalUrl) {
+        database.update(
+                "INSERT INTO user_pictures (id, user_id, external_url) VALUES (?, ?, ?)",
+                pictureId, userId, externalUrl);
     }
 
     public int setProfile(UUID userId, UUID pictureId) {

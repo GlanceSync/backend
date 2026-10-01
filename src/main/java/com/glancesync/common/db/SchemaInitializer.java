@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
-/** Applies schema.sql, then seed-interests.sql, at startup. Every statement in both is idempotent. */
 @Singleton
 public class SchemaInitializer {
 
@@ -25,7 +24,7 @@ public class SchemaInitializer {
     @EventListener
     void onStartup(StartupEvent event) {
         database.execute(readResource("schema.sql"));
-        database.execute(readResource("seed-interests.sql"));
+        database.execute(readResource("seed-test-users.sql"));
         LOG.info("Database schema and seed data applied");
     }
 
