@@ -243,3 +243,14 @@ CREATE TABLE IF NOT EXISTS discovery_preferences (
     sort_order  VARCHAR(4),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Accounts at third-party providers (42, Google, Facebook) that sign a user in.
+CREATE TABLE IF NOT EXISTS user_oauth_accounts (
+    provider         VARCHAR(16)  NOT NULL,
+    provider_user_id VARCHAR(255) NOT NULL,
+    user_id          UUID         NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    created_at       TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    PRIMARY KEY (provider, provider_user_id)
+);
+
+CREATE INDEX IF NOT EXISTS user_oauth_accounts_user_id_idx ON user_oauth_accounts (user_id);

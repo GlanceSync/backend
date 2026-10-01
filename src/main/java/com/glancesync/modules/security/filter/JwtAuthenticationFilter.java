@@ -37,10 +37,15 @@ public class JwtAuthenticationFilter {
             "/api/auth/resend-verification",
             "/api/auth/forgot-password",
             "/api/auth/reset-password",
-            "/api/auth/me");
+            "/api/auth/me",
+            "/api/auth/oauth/providers");
 
     private static final Pattern PUBLIC_PICTURE =
             Pattern.compile("^/api/users/[0-9a-fA-F-]{36}/pictures/[0-9a-fA-F-]{36}$");
+
+    // Starting and finishing "Sign in with <provider>": /api/auth/{provider}[/callback]
+    private static final Pattern PUBLIC_OAUTH =
+            Pattern.compile("^/api/auth/(42|google|facebook)(/callback)?$");
 
     private final JwtService jwtService;
 
@@ -78,6 +83,7 @@ public class JwtAuthenticationFilter {
         String path = request.getPath();
         return request.getMethod() == HttpMethod.OPTIONS
                 || PUBLIC_PATHS.contains(path)
+                || (request.getMethod() == HttpMethod.GET && PUBLIC_OAUTH.matcher(path).matches())
                 || (request.getMethod() == HttpMethod.GET && PUBLIC_PICTURE.matcher(path).matches());
     }
 }
