@@ -4,6 +4,7 @@ import java.util.UUID;
 import com.glancesync.common.exception.ApiException;
 import com.glancesync.modules.security.filter.JwtAuthenticationFilter;
 import com.glancesync.modules.user.dto.LocationRequest;
+import com.glancesync.modules.user.dto.MapVisibilityRequest;
 import com.glancesync.modules.user.dto.ProfileRequest;
 import com.glancesync.modules.user.dto.ProfileResponse;
 import com.glancesync.modules.user.service.ProfileService;
@@ -46,6 +47,11 @@ public class ProfileController {
     @Put(value = "/me/location", consumes = MediaType.APPLICATION_JSON)
     public ProfileResponse updateLocation(HttpRequest<?> request, @Body @Nullable LocationRequest body) {
         return profileService.updateLocation(selfId(request), body);
+    }
+
+    @Put(value = "/me/map-visibility", consumes = MediaType.APPLICATION_JSON)
+    public ProfileResponse updateMapVisibility(HttpRequest<?> request, @Body @Nullable MapVisibilityRequest body) {
+        return profileService.updateMapVisibility(selfId(request), body);
     }
 
     private UUID selfId(HttpRequest<?> request) {
