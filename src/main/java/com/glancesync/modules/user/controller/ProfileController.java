@@ -6,6 +6,7 @@ import com.glancesync.modules.discovery.entity.DiscoveryPreferences;
 import com.glancesync.modules.discovery.service.DiscoveryService;
 import com.glancesync.modules.security.filter.JwtAuthenticationFilter;
 import com.glancesync.modules.user.dto.LocationRequest;
+import com.glancesync.modules.user.dto.MapVisibilityRequest;
 import com.glancesync.modules.user.dto.ProfileRequest;
 import com.glancesync.modules.user.dto.ProfileResponse;
 import com.glancesync.modules.user.service.ProfileService;
@@ -52,6 +53,9 @@ public class ProfileController {
         return profileService.updateLocation(selfId(request), body);
     }
 
+    @Put(value = "/me/map-visibility", consumes = MediaType.APPLICATION_JSON)
+    public ProfileResponse updateMapVisibility(HttpRequest<?> request, @Body @Nullable MapVisibilityRequest body) {
+        return profileService.updateMapVisibility(selfId(request), body);
     /** The filters GET /api/users/discover applies. Fields never saved come back null. */
     @Get("/me/preferences")
     public DiscoveryPreferences preferences(HttpRequest<?> request) {

@@ -9,6 +9,7 @@ import com.glancesync.modules.like.dto.LikeStatus;
 import com.glancesync.modules.like.service.LikeService;
 import com.glancesync.modules.realtime.service.PresenceRegistry;
 import com.glancesync.modules.user.dto.LocationRequest;
+import com.glancesync.modules.user.dto.MapVisibilityRequest;
 import com.glancesync.modules.user.dto.PictureResponse;
 import com.glancesync.modules.user.dto.ProfileRequest;
 import com.glancesync.modules.user.dto.ProfileResponse;
@@ -33,6 +34,8 @@ public class ProfileService {
     public static final int MIN_AGE = 18;
     public static final int MAX_AGE = 120;
     public static final int MAX_CITY_LENGTH = 100;
+    /** Anything vaguer than this is an IP guess, not a GPS fix worth storing as one. */
+    public static final double MAX_GPS_ACCURACY_METERS = 100_000;
 
 
     private final UserDao userDao;
@@ -63,6 +66,9 @@ public class ProfileService {
                 self.avatarUrl(), self.gender(), self.sexualPreference(), self.biography(),
                 self.age(), self.city(), self.fameRating(), presence.isOnline(selfId), self.lastSeenAt(),
                 interestNames(selfId), pictures(selfId),
+                self.birthDate(), self.latitude(), self.longitude(), self.locationAccuracyM(), self.locationSource(),
+                self.showOnMap(), self.profileCompleted(),
+                null, null, null, null);
                 self.birthDate(), self.latitude(), self.longitude(), self.locationSource(), self.profileCompleted(),
                 null, null, null, null, null);
     }
@@ -81,6 +87,8 @@ public class ProfileService {
                 other.avatarUrl(), other.gender(), other.sexualPreference(), other.biography(),
                 other.age(), other.city(), other.fameRating(), presence.isOnline(userId), other.lastSeenAt(),
                 interestNames(userId), pictures(userId),
+                null, null, null, null, null, null, null,
+                distanceKm(self, other), likes.likedByMe(), likes.likesMe(), likes.connected());
                 null, null, null, null, null,
                 ApproximateDistance.km(meters), ApproximateDistance.label(meters), likes.likedByMe(), likes.likesMe(), likes.connected());
     }
@@ -135,14 +143,28 @@ public class ProfileService {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Enter your city or neighbourhood.",
                     Map.of("city", "Required."));
         }
+        Double accuracy = request.source() == LocationSource.GPS ? request.accuracy() : null;
+        if (accuracy != null && !(accuracy >= 0 && accuracy <= MAX_GPS_ACCURACY_METERS)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "That location accuracy is not believable.",
+                    Map.of("accuracy", "Invalid."));
+        }
         if (city != null && city.length() > MAX_CITY_LENGTH) {
             throw new ApiException(HttpStatus.BAD_REQUEST,
                     "The city can be at most " + MAX_CITY_LENGTH + " characters.", Map.of("city", "Too long."));
         }
 
-        userDao.updateLocation(selfId, roundToNeighbourhood(latitude), roundToNeighbourhood(longitude),
-                city, request.source());
+        // Stored exactly: distances and the map need it. Others only ever see it blurred.
+        userDao.updateLocation(selfId, latitude, longitude, accuracy, city, request.source());
         userDao.refreshProfileCompleted(selfId);
+        return mine(selfId);
+    }
+
+    public ProfileResponse updateMapVisibility(UUID selfId, MapVisibilityRequest request) {
+        if (request == null || request.showOnMap() == null) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Say whether to show you on the map.",
+                    Map.of("showOnMap", "Required."));
+        }
+        userDao.updateShowOnMap(selfId, request.showOnMap());
         return mine(selfId);
     }
 
@@ -170,6 +192,17 @@ public class ProfileService {
         return pictureDao.forUser(userId).stream().map(PictureResponse::of).toList();
     }
 
+    private static Double distanceKm(User a, User b) {
+        if (a.latitude() == null || b.latitude() == null) {
+            return null;
+        }
+        double lat1 = Math.toRadians(a.latitude());
+        double lat2 = Math.toRadians(b.latitude());
+        double dLat = lat2 - lat1;
+        double dLon = Math.toRadians(b.longitude() - a.longitude());
+        double h = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        return (double) Math.round(2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(h)));
     private static Double roundToNeighbourhood(Double coordinate) {
         return coordinate == null ? null : Math.round(coordinate * 100) / 100.0;
     }

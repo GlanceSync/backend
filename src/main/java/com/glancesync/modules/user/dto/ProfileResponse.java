@@ -17,8 +17,8 @@ public record ProfileResponse(
         Integer age, String city, int fameRating, boolean online, Instant lastSeenAt,
         List<String> interests, List<PictureResponse> pictures,
         // Own profile only.
-        LocalDate birthDate, Double latitude, Double longitude, LocationSource locationSource,
-        Boolean completed,
+        LocalDate birthDate, Double latitude, Double longitude, Double locationAccuracy,
+        LocationSource locationSource, Boolean showOnMap, Boolean completed,
         // Someone else's profile only.
         Integer distanceKm, String distance, Boolean likedByMe, Boolean likesMe, Boolean connected) {
 }
