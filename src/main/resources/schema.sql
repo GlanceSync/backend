@@ -37,8 +37,16 @@ CREATE TABLE IF NOT EXISTS users (
     profile_completed BOOLEAN      NOT NULL DEFAULT false
 );
 
+-- Added after the table first shipped, so existing databases pick them up too.
+-- Radius in metres the browser reported for a GPS fix; null for a manual location.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS location_accuracy_m REAL;
+-- Whether others see this user on the map. Distances and discovery ignore it.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS show_on_map BOOLEAN NOT NULL DEFAULT true;
+
 -- Spatial index behind "everyone within N km".
 CREATE INDEX IF NOT EXISTS users_location_idx ON users USING GIST (location);
+-- The map filters on a longitude/latitude box, which is a planar test on the geometry.
+CREATE INDEX IF NOT EXISTS users_location_geom_idx ON users USING GIST ((location::geometry));
 
 -- Usernames and emails are unique case-insensitively, but stored as the user typed them.
 CREATE UNIQUE INDEX IF NOT EXISTS users_username_lower_key ON users (LOWER(username));

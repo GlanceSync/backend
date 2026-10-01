@@ -5,6 +5,7 @@ import com.glancesync.common.db.Database;
 import com.glancesync.modules.user.enums.Gender;
 import com.glancesync.modules.user.enums.LocationSource;
 import com.glancesync.modules.user.enums.SexualPreference;
+import com.glancesync.modules.user.entity.MapUser;
 import com.glancesync.modules.user.entity.User;
 import jakarta.inject.Singleton;
 
@@ -22,8 +23,8 @@ public class UserDao {
     private static final String SELECT_USER =
             "SELECT id, username, email, first_name, last_name, password_hash, email_verified_at, "
                     + "created_at, last_seen_at, profile_picture_id, gender, sexual_preference, biography, birth_date, "
-                    + "ST_Y(location::geometry) AS latitude, ST_X(location::geometry) AS longitude, city, location_source, location_updated_at, fame_rating, "
-                    + "profile_completed FROM users ";
+                    + "ST_Y(location::geometry) AS latitude, ST_X(location::geometry) AS longitude, city, location_source, location_updated_at, "
+                    + "location_accuracy_m, show_on_map, fame_rating, profile_completed FROM users ";
 
     private final Database database;
 
@@ -84,18 +85,51 @@ public class UserDao {
                 gender == null ? null : gender.dbValue(), sexualPreference.dbValue(), biography, birthDate, userId);
     }
 
-    public void updateLocation(UUID userId, Double latitude, Double longitude, String city, LocationSource source) {
+    public void updateLocation(UUID userId, Double latitude, Double longitude, Double accuracyMeters, String city,
+                               LocationSource source) {
         if (latitude == null || longitude == null) {
             database.update(
-                    "UPDATE users SET location = NULL, city = ?, location_source = ?, "
+                    "UPDATE users SET location = NULL, location_accuracy_m = NULL, city = ?, location_source = ?, "
                             + "location_updated_at = now() WHERE id = ?",
                     city, source.dbValue(), userId);
             return;
         }
         database.update(
-                "UPDATE users SET location = ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, city = ?, "
-                        + "location_source = ?, location_updated_at = now() WHERE id = ?",
-                longitude, latitude, city, source.dbValue(), userId);
+                "UPDATE users SET location = ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, "
+                        + "location_accuracy_m = ?, city = ?, location_source = ?, location_updated_at = now() "
+                        + "WHERE id = ?",
+                longitude, latitude, accuracyMeters, city, source.dbValue(), userId);
+    }
+
+    public void updateShowOnMap(UUID userId, boolean showOnMap) {
+        database.update("UPDATE users SET show_on_map = ? WHERE id = ?", showOnMap, userId);
+    }
+
+    /**
+     * People inside a longitude/latitude box, nearest to {@code selfId} first. Positions are
+     * snapped to a grid of {@code gridDegrees} so the map never reveals where someone lives;
+     * the distance is exact and left for the caller to round.
+     */
+    public List<MapUser> findOnMap(UUID selfId, double minLatitude, double minLongitude, double maxLatitude,
+                                   double maxLongitude, double gridDegrees, int limit) {
+        return database.query(
+                "SELECT u.id, u.username, u.first_name, u.profile_picture_id, u.birth_date, u.last_seen_at, "
+                        + "ST_Y(ST_SnapToGrid(u.location::geometry, ?)) AS latitude, "
+                        + "ST_X(ST_SnapToGrid(u.location::geometry, ?)) AS longitude, "
+                        + "ST_Distance(u.location, me.location) AS meters, "
+                        + "ARRAY(SELECT i.name FROM user_interests mine "
+                        + "JOIN user_interests theirs ON theirs.interest_id = mine.interest_id "
+                        + "JOIN interests i ON i.id = mine.interest_id "
+                        + "WHERE mine.user_id = me.id AND theirs.user_id = u.id ORDER BY i.name) AS common_interests "
+                        + "FROM users me JOIN users u ON u.id <> me.id "
+                        + "WHERE me.id = ? AND u.profile_completed AND u.show_on_map AND u.location IS NOT NULL "
+                        + "AND u.location::geometry && ST_MakeEnvelope(?, ?, ?, ?, 4326) "
+                        + "AND NOT EXISTS (SELECT 1 FROM blocks b "
+                        + "WHERE (b.blocker_id = me.id AND b.blocked_id = u.id) "
+                        + "OR (b.blocker_id = u.id AND b.blocked_id = me.id)) "
+                        + "ORDER BY meters NULLS LAST, u.fame_rating DESC LIMIT ?",
+                UserDao::mapMapUser,
+                gridDegrees, gridDegrees, selfId, minLongitude, minLatitude, maxLongitude, maxLatitude, limit);
     }
 
     public Optional<Double> distanceMeters(UUID userA, UUID userB) {
@@ -154,8 +188,29 @@ public class UserDao {
                 rs.getString("city"),
                 LocationSource.fromDb(rs.getString("location_source")),
                 toInstant(rs.getTimestamp("location_updated_at")),
+                getNullableDouble(rs, "location_accuracy_m"),
+                rs.getBoolean("show_on_map"),
                 rs.getInt("fame_rating"),
                 rs.getBoolean("profile_completed"));
+    }
+
+    private static MapUser mapMapUser(ResultSet rs) throws SQLException {
+        return new MapUser(
+                rs.getObject("id", UUID.class),
+                rs.getString("username"),
+                rs.getString("first_name"),
+                rs.getObject("profile_picture_id", UUID.class),
+                rs.getObject("birth_date", LocalDate.class),
+                toInstant(rs.getTimestamp("last_seen_at")),
+                rs.getDouble("latitude"),
+                rs.getDouble("longitude"),
+                rs.getObject("meters", Double.class),
+                List.of((String[]) rs.getArray("common_interests").getArray()));
+    }
+
+    private static Double getNullableDouble(ResultSet rs, String column) throws SQLException {
+        double value = rs.getDouble(column);
+        return rs.wasNull() ? null : value;
     }
 
     private static Instant toInstant(Timestamp timestamp) {
