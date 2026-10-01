@@ -56,6 +56,8 @@ public class ProfileController {
     @Put(value = "/me/map-visibility", consumes = MediaType.APPLICATION_JSON)
     public ProfileResponse updateMapVisibility(HttpRequest<?> request, @Body @Nullable MapVisibilityRequest body) {
         return profileService.updateMapVisibility(selfId(request), body);
+    }
+
     /** The filters GET /api/users/discover applies. Fields never saved come back null. */
     @Get("/me/preferences")
     public DiscoveryPreferences preferences(HttpRequest<?> request) {
