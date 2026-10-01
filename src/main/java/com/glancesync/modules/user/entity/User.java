@@ -31,6 +31,8 @@ public record User(
     String city,
     LocationSource locationSource,
     Instant locationUpdatedAt,
+    Double locationAccuracyM,
+    boolean showOnMap,
     int fameRating,
     boolean profileCompleted) {
 
