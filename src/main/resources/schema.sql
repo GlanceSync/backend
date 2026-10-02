@@ -1,5 +1,8 @@
 -- GlanceSync schema. Applied on startup; every statement is idempotent.
 
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA public;
+
 -- Geography types and spatial indexes for location matching. The server must have
 -- PostGIS installed, and creating the extension needs a superuser the first time.
 CREATE EXTENSION IF NOT EXISTS postgis;

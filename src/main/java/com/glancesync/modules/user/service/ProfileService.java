@@ -188,7 +188,4 @@ public class ProfileService {
         return pictureDao.forUser(userId).stream().map(PictureResponse::of).toList();
     }
 
-    private static Double roundToNeighbourhood(Double coordinate) {
-        return coordinate == null ? null : Math.round(coordinate * 100) / 100.0;
-    }
 }
