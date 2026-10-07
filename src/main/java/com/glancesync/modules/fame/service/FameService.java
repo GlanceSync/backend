@@ -1,7 +1,7 @@
 package com.glancesync.modules.fame.service;
 
 import java.util.UUID;
-import com.glancesync.common.db.Database;
+import com.glancesync.modules.fame.repo.FameDao;
 import jakarta.inject.Singleton;
 
 @Singleton
@@ -12,22 +12,13 @@ public class FameService {
     public static final int POINTS_PER_CONNECTION = 10;
     public static final int POINTS_PER_REPORT = -20;
 
-    private final Database database;
+    private final FameDao fameDao;
 
-    public FameService(Database database) {
-        this.database = database;
+    public FameService(FameDao fameDao) {
+        this.fameDao = fameDao;
     }
 
     public void recompute(UUID userId) {
-        database.update(
-                "UPDATE users SET fame_rating = GREATEST(0, "
-                        + "  ? * (SELECT COUNT(*) FROM profile_views WHERE viewed_id = users.id)"
-                        + "+ ? * (SELECT COUNT(*) FROM likes WHERE liked_id = users.id AND unliked_at IS NULL)"
-                        + "+ ? * (SELECT COUNT(*) FROM likes l JOIN likes back"
-                        + "       ON back.liker_id = l.liked_id AND back.liked_id = l.liker_id AND back.unliked_at IS NULL"
-                        + "       WHERE l.liked_id = users.id AND l.unliked_at IS NULL)"
-                        + "+ ? * (SELECT COUNT(*) FROM reports WHERE reported_id = users.id)"
-                        + ") WHERE id = ?",
-                POINTS_PER_VIEWER, POINTS_PER_LIKE, POINTS_PER_CONNECTION, POINTS_PER_REPORT, userId);
+        fameDao.recompute(userId, POINTS_PER_VIEWER, POINTS_PER_LIKE, POINTS_PER_CONNECTION, POINTS_PER_REPORT);
     }
 }

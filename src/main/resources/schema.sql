@@ -1,4 +1,6 @@
--- GlanceSync schema. Applied on startup; every statement is idempotent.
+-- GlanceSync schema. Every statement is idempotent: applying it again only adds what is
+-- missing. How it is applied at startup (or whether it is dropped first) is chosen by
+-- glancesync.db.ddl-auto; see SchemaInitializer.
 
 -- Geography types and spatial indexes for location matching. The server must have
 -- PostGIS installed, and creating the extension needs a superuser the first time.

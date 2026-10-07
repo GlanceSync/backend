@@ -89,6 +89,26 @@ public class Database {
         }
     }
 
+    @FunctionalInterface
+    public interface ConnectionWork<T> {
+        T run(Connection connection) throws SQLException;
+    }
+
+    /** Runs {@code work} in one transaction and always rolls it back, so nothing it does persists. */
+    public <T> T inRolledBackTransaction(ConnectionWork<T> work) {
+        try (Connection connection = dataSource.getConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                return work.run(connection);
+            } finally {
+                connection.rollback();
+                connection.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            throw new DatabaseException("Transaction failed", e);
+        }
+    }
+
     private void bind(PreparedStatement statement, Object... params) throws SQLException {
         for (int i = 0; i < params.length; i++) {
             statement.setObject(i + 1, params[i]);

@@ -10,6 +10,8 @@ import com.glancesync.modules.security.service.SecureTokens;
 import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.PictureDao;
 import com.glancesync.modules.user.repo.UserDao;
+import com.glancesync.modules.user.service.PictureService;
+import com.glancesync.modules.user.storage.PictureStorage;
 import io.micronaut.http.HttpStatus;
 import jakarta.inject.Singleton;
 
@@ -19,6 +21,8 @@ import java.util.regex.Pattern;
 /**
  * Turns a 42, Google or Facebook account into a user. The first login links the
  * provider account to the user with the same verified email, or creates a new user.
+ * When it links to an existing user, that user's names, username and profile picture are
+ * replaced with what the provider shares, and their password is removed.
  */
 @Singleton
 public class OAuthUserService {
@@ -34,13 +38,15 @@ public class OAuthUserService {
     private final UserDao userDao;
     private final PictureDao pictureDao;
     private final PasswordHasher passwordHasher;
+    private final PictureStorage pictureStorage;
 
     public OAuthUserService(OAuthAccountDao accountDao, UserDao userDao, PictureDao pictureDao,
-                            PasswordHasher passwordHasher) {
+                            PasswordHasher passwordHasher, PictureStorage pictureStorage) {
         this.accountDao = accountDao;
         this.userDao = userDao;
         this.pictureDao = pictureDao;
         this.passwordHasher = passwordHasher;
+        this.pictureStorage = pictureStorage;
     }
 
     /** Finds, links or creates the user behind the provider account. */
@@ -69,7 +75,9 @@ public class OAuthUserService {
                     "Your email address at that provider is not verified.");
         }
 
-        User user = userDao.findByEmail(email).orElseGet(() -> create(oauthUser, email));
+        User user = userDao.findByEmail(email)
+                .map(existing -> updateFromProvider(existing, oauthUser))
+                .orElseGet(() -> create(oauthUser, email));
         accountDao.link(provider.key(), oauthUser.providerId(), user.id());
         userDao.markEmailVerified(user.id());
         return userDao.findById(user.id()).orElseThrow();
@@ -85,7 +93,7 @@ public class OAuthUserService {
         UUID id = userDao.create(username, email, firstName, lastName, unusablePassword);
 
         String avatar = oauthUser.imageUrl();
-        if (avatar != null && avatar.startsWith("https://") && avatar.length() <= 2048) {
+        if (isUsableAvatar(avatar)) {
             pictureDao.addExternal(UUID.randomUUID(), id, avatar);
             pictureDao.ensureProfile(id);
             userDao.refreshProfileCompleted(id);
@@ -93,6 +101,48 @@ public class OAuthUserService {
 
         return userDao.findById(id).orElseThrow(
                 () -> new IllegalStateException("User vanished immediately after creation: " + id));
+    }
+
+    /** Overwrites what the provider knows about an existing user; keeps whatever it leaves blank. */
+    private User updateFromProvider(User user, OAuthUserResponse oauthUser) {
+        String firstName = name(oauthUser.firstName(), user.firstName());
+        String lastName = name(oauthUser.lastName(), user.lastName());
+        userDao.updateNames(user.id(), firstName, lastName);
+
+        // Same rule as a new account: the provider's username, else the email's local part.
+        String suggested = sanitizeUsername(oauthUser.username());
+        if (suggested == null) {
+            suggested = sanitizeUsername(user.email().substring(0, user.email().indexOf('@')));
+        }
+        if (suggested != null && !suggested.equals(user.username())) {
+            String username = suggested.equalsIgnoreCase(user.username())
+                    ? suggested : uniqueUsername(suggested, user.email());
+            userDao.updateUsername(user.id(), username);
+        }
+
+        // Whoever set the old password may not own the email; only the provider vouches for that.
+        // "Forgot password" sets a new one if they ever want it.
+        userDao.updatePasswordHash(user.id(), passwordHasher.hash(SecureTokens.generate()));
+
+        String avatar = oauthUser.imageUrl();
+        if (isUsableAvatar(avatar)) {
+            UUID previous = user.profilePictureId();
+            UUID added = UUID.randomUUID();
+            pictureDao.addExternal(added, user.id(), avatar);
+            pictureDao.setProfile(user.id(), added);
+            // The old profile picture stays in the gallery unless that would exceed the limit.
+            if (previous != null && pictureDao.countForUser(user.id()) > PictureService.MAX_PER_USER) {
+                pictureDao.delete(user.id(), previous);
+                pictureStorage.delete(user.id(), previous);
+            }
+            userDao.refreshProfileCompleted(user.id());
+        }
+
+        return user;
+    }
+
+    private static boolean isUsableAvatar(String url) {
+        return url != null && url.startsWith("https://") && url.length() <= 2048;
     }
 
     private String uniqueUsername(String suggested, String email) {

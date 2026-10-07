@@ -154,6 +154,10 @@ public class UserDao {
         database.update("UPDATE users SET first_name = ?, last_name = ? WHERE id = ?", firstName, lastName, userId);
     }
 
+    public void updateUsername(UUID userId, String username) {
+        database.update("UPDATE users SET username = ? WHERE id = ?", username, userId);
+    }
+
     public void updatePasswordHash(UUID userId, String passwordHash) {
         database.update("UPDATE users SET password_hash = ? WHERE id = ?", passwordHash, userId);
     }
