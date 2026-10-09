@@ -1,10 +1,8 @@
 package com.glancesync.modules.mail.service;
 
-import jakarta.inject.Singleton;
 
 import java.time.Duration;
 
-@Singleton
 public class AccountMails {
 
     private final MailService mailService;

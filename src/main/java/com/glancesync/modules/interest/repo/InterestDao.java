@@ -3,7 +3,6 @@ package com.glancesync.modules.interest.repo;
 import java.util.UUID;
 import com.glancesync.common.db.Database;
 import com.glancesync.modules.interest.entity.Interest;
-import jakarta.inject.Singleton;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -11,7 +10,6 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 
-@Singleton
 public class InterestDao {
 
     private static final String SELECT_INTEREST =

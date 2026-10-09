@@ -9,10 +9,8 @@ import com.glancesync.modules.user.dto.MapUserResponse;
 import com.glancesync.modules.user.entity.MapUser;
 import com.glancesync.modules.user.repo.UserDao;
 import com.glancesync.web.HttpStatus;
-import jakarta.inject.Singleton;
 
 /** Who to draw on the map for the part of it someone is looking at. */
-@Singleton
 public class MapService {
 
     /** A map zoomed out over a whole country would otherwise send everyone in it. */

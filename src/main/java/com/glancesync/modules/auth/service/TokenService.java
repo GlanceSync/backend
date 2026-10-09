@@ -6,7 +6,6 @@ import com.glancesync.modules.security.service.JwtService;
 import com.glancesync.modules.security.service.SecureTokens;
 import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.UserDao;
-import jakarta.inject.Singleton;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -15,7 +14,6 @@ import java.util.Optional;
  * Issues, rotates and revokes token pairs. Every refresh token is recorded (as a hash),
  * so logging out really ends it, and each one can be exchanged only once.
  */
-@Singleton
 public class TokenService {
 
     public record Tokens(User user, String accessToken, String refreshToken) {

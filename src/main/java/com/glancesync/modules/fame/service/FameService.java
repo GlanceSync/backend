@@ -2,9 +2,7 @@ package com.glancesync.modules.fame.service;
 
 import java.util.UUID;
 import com.glancesync.modules.fame.repo.FameDao;
-import jakarta.inject.Singleton;
 
-@Singleton
 public class FameService {
 
     public static final int POINTS_PER_VIEWER = 1;

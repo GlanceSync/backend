@@ -7,12 +7,10 @@ import com.glancesync.modules.security.service.PasswordHasher;
 import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.UserDao;
 import com.glancesync.web.HttpStatus;
-import jakarta.inject.Singleton;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@Singleton
 public class AuthService {
 
     private final UserDao userDao;

@@ -20,14 +20,12 @@ import com.glancesync.modules.user.repo.PictureDao;
 import com.glancesync.modules.user.repo.UserDao;
 import com.glancesync.modules.visit.service.ProfileViewService;
 import com.glancesync.web.HttpStatus;
-import jakarta.inject.Singleton;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 
-@Singleton
 public class ProfileService {
 
     public static final int MAX_BIOGRAPHY_LENGTH = 1000;

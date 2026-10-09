@@ -44,10 +44,6 @@ public record User(
         return birthDate == null ? null : Period.between(birthDate, LocalDate.now(ZoneOffset.UTC)).getYears();
     }
 
-    public boolean hasLocation() {
-        return locationSource != null;
-    }
-
     public String avatarUrl() {
         return profilePictureId == null ? null : pictureUrl(id, profilePictureId);
     }

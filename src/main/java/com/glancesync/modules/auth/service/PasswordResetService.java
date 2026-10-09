@@ -11,13 +11,11 @@ import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.UserDao;
 import com.glancesync.web.Value;
 import com.glancesync.web.HttpStatus;
-import jakarta.inject.Singleton;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 
-@Singleton
 public class PasswordResetService {
 
     private static final int RESEND_COOLDOWN_SECONDS = 60;

@@ -6,7 +6,6 @@ import com.glancesync.modules.interest.entity.Interest;
 import com.glancesync.modules.interest.repo.InterestDao;
 import com.glancesync.modules.user.repo.UserDao;
 import com.glancesync.web.HttpStatus;
-import jakarta.inject.Singleton;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -16,7 +15,6 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 
-@Singleton
 public class InterestService {
 
     public static final int MAX_PER_USER = 10;

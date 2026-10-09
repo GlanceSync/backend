@@ -13,7 +13,6 @@ import com.glancesync.modules.realtime.service.PresenceRegistry;
 import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.UserDao;
 import com.glancesync.web.HttpStatus;
-import jakarta.inject.Singleton;
 
 import java.util.List;
 import java.util.Locale;
@@ -28,7 +27,6 @@ import java.util.Map;
  * {@value DiscoveryDao#SAME_AREA_KM} km or the same city), then by a match score that weighs
  * shared tags, fame and distance together.
  */
-@Singleton
 public class DiscoveryService {
 
     public static final int DEFAULT_LIMIT = 50;

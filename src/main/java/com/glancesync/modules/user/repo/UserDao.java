@@ -7,7 +7,6 @@ import com.glancesync.modules.user.enums.LocationSource;
 import com.glancesync.modules.user.enums.SexualPreference;
 import com.glancesync.modules.user.entity.MapUser;
 import com.glancesync.modules.user.entity.User;
-import jakarta.inject.Singleton;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -17,7 +16,6 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-@Singleton
 public class UserDao {
 
     private static final String SELECT_USER =

@@ -18,10 +18,9 @@ public final class HttpResponse<T> {
     public static HttpResponse<Object> accepted() { return new HttpResponse<>(202, null); }
     public static HttpResponse<Object> noContent() { return new HttpResponse<>(204, null); }
     public static <T> HttpResponse<T> notFound() { return new HttpResponse<>(404, null); }
-    public static <T> HttpResponse<T> redirect(URI uri) { return HttpResponse.<T>status(302).header("Location", uri.toString()); }
+    public static <T> HttpResponse<T> redirect(URI uri) { return new HttpResponse<T>(302, null).header("Location", uri.toString()); }
     public static HttpResponse<Object> seeOther(URI uri) { return status(HttpStatus.SEE_OTHER).header("Location", uri.toString()); }
     public static <T> HttpResponse<T> status(HttpStatus status) { return new HttpResponse<>(status.getCode(), null); }
-    public static <T> HttpResponse<T> status(int status) { return new HttpResponse<>(status, null); }
     public HttpResponse<T> body(T body) { this.body = body; return this; }
     public HttpResponse<T> header(String name, String value) { headers.put(name, value); return this; }
     public HttpResponse<T> contentType(String value) { return header("Content-Type", value); }

@@ -6,7 +6,6 @@ import com.glancesync.modules.notification.service.NotificationService;
 import com.glancesync.modules.realtime.dto.RealtimeMessages;
 import com.glancesync.modules.realtime.service.RealtimePush;
 import com.glancesync.modules.user.repo.UserDao;
-import jakarta.inject.Singleton;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -15,7 +14,6 @@ import java.time.Instant;
  * Writes one row per finished call and pushes it to both participants, so a call shows
  * up in the conversation the same way a message does.
  */
-@Singleton
 public class CallLogService {
 
     public static final String ANSWERED = "answered";

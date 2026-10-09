@@ -8,12 +8,10 @@ import com.glancesync.modules.event.repo.EventDao;
 import com.glancesync.modules.notification.service.NotificationService;
 import com.glancesync.modules.user.repo.UserDao;
 import com.glancesync.web.HttpStatus;
-import jakarta.inject.Singleton;
 
 import java.time.Instant;
 import java.util.List;
 
-@Singleton
 public class EventService {
 
     public static final String PENDING = "pending";

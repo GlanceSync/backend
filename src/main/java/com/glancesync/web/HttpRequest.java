@@ -17,8 +17,6 @@ public final class HttpRequest<T> {
     public void setAttribute(String key, Object value) { delegate.attribute(key, value); }
     public Headers getHeaders() { return new Headers(); }
     public Cookies getCookies() { return new Cookies(); }
-    public Parameters getParameters() { return new Parameters(); }
-    public Session getSession() { return new Session(delegate.session(true)); }
     public final class Headers {
         public Optional<String> findFirst(String name) { return Optional.ofNullable(delegate.headers(name)); }
     }
@@ -27,8 +25,5 @@ public final class HttpRequest<T> {
             String value = delegate.cookie(name);
             return value == null ? Optional.empty() : Optional.of(Cookie.of(name, value));
         }
-    }
-    public final class Parameters {
-        public Optional<String> getFirst(String name) { return Optional.ofNullable(delegate.queryParams(name)); }
     }
 }

@@ -18,7 +18,6 @@ public final class Cookie {
     public Cookie path(String value) { path = value; return this; }
     public Cookie sameSite(SameSite value) { sameSite = value; return this; }
     public Cookie maxAge(Duration value) { maxAge = value; return this; }
-    public String getValue() { return value; }
     public String name() { return name; }
     public String value() { return value; }
     public boolean httpOnly() { return httpOnly; }

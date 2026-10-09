@@ -4,7 +4,6 @@ import java.util.UUID;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WriteCallback;
-import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +11,6 @@ import org.slf4j.LoggerFactory;
  * Sends messages out over open sockets. Kept separate from the socket endpoint so any
  * service can push without depending on the endpoint, which would be a cycle.
  */
-@Singleton
 public class RealtimePush {
 
     private static final Logger LOG = LoggerFactory.getLogger(RealtimePush.class);

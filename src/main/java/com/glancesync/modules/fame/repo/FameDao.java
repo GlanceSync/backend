@@ -2,9 +2,7 @@ package com.glancesync.modules.fame.repo;
 
 import java.util.UUID;
 import com.glancesync.common.db.Database;
-import jakarta.inject.Singleton;
 
-@Singleton
 public class FameDao {
 
     private final Database database;

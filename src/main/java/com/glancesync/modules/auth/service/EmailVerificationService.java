@@ -8,13 +8,11 @@ import com.glancesync.modules.security.service.SecureTokens;
 import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.UserDao;
 import com.glancesync.web.Value;
-import jakarta.inject.Singleton;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 
-@Singleton
 public class EmailVerificationService {
 
     private static final int RESEND_COOLDOWN_SECONDS = 60;

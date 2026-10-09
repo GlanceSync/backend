@@ -1,3 +1,3 @@
 package com.glancesync.web.cookie;
 
-public enum SameSite { Strict, Lax, None }
+public enum SameSite { Strict, Lax }

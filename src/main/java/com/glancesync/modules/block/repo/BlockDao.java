@@ -2,12 +2,10 @@ package com.glancesync.modules.block.repo;
 
 import java.util.UUID;
 import com.glancesync.common.db.Database;
-import jakarta.inject.Singleton;
 
 import java.util.List;
 import java.util.Set;
 
-@Singleton
 public class BlockDao {
 
     private final Database database;

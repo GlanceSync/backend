@@ -1,7 +1,6 @@
 package com.glancesync.modules.user.storage;
 
 import com.glancesync.web.Value;
-import jakarta.inject.Singleton;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -13,7 +12,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 
-@Singleton
 public class PictureStorage {
 
     private final Path root;

@@ -2,13 +2,11 @@ package com.glancesync.modules.auth.repo;
 
 import java.util.UUID;
 import com.glancesync.common.db.Database;
-import jakarta.inject.Singleton;
 
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Optional;
 
-@Singleton
 public class PasswordResetDao {
 
     private final Database database;

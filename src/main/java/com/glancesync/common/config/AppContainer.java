@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/** Tiny constructor-injection container. It supplies infrastructure only; application logic stays explicit. */
 public final class AppContainer implements AutoCloseable {
     private final AppConfig config;
     private final Map<Class<?>, Object> singletons = new HashMap<>();

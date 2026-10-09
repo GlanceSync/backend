@@ -6,11 +6,9 @@ import com.glancesync.modules.fame.service.FameService;
 import com.glancesync.modules.report.repo.ReportDao;
 import com.glancesync.modules.user.repo.UserDao;
 import com.glancesync.web.HttpStatus;
-import jakarta.inject.Singleton;
 
 import java.util.Map;
 
-@Singleton
 public class ReportService {
 
     public static final int MAX_REASON_LENGTH = 500;

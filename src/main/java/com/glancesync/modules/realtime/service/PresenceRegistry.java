@@ -2,7 +2,6 @@ package com.glancesync.modules.realtime.service;
 
 import java.util.UUID;
 import org.eclipse.jetty.websocket.api.Session;
-import jakarta.inject.Singleton;
 
 import java.util.Collection;
 import java.util.List;
@@ -18,7 +17,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * A user may have several connections at once (multiple tabs or devices), so
  * "online" means "at least one open session".
  */
-@Singleton
 public class PresenceRegistry {
 
     private final Map<UUID, Set<Session>> sessionsByUser = new ConcurrentHashMap<>();

@@ -1,7 +1,6 @@
 package com.glancesync.common.db;
 
 import com.glancesync.web.Value;
-import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +20,6 @@ import java.util.UUID;
  * create-drop; see {@link DdlAuto}. Separately, {@code glancesync.db.seed} (DB_SEED) loads the
  * 500 test profiles, which only ever adds rows that are missing.
  */
-@Singleton
 public class SchemaInitializer {
 
     private static final Logger LOG = LoggerFactory.getLogger(SchemaInitializer.class);

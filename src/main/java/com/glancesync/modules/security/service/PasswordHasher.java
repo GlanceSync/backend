@@ -1,9 +1,7 @@
 package com.glancesync.modules.security.service;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
-import jakarta.inject.Singleton;
 
-@Singleton
 public class PasswordHasher {
 
     private static final int COST = 12;

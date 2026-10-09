@@ -4,12 +4,10 @@ import java.util.UUID;
 import com.glancesync.common.db.Database;
 import com.glancesync.modules.user.dto.ActivityResponse;
 import com.glancesync.modules.user.entity.User;
-import jakarta.inject.Singleton;
 
 import java.util.List;
 import java.util.Set;
 
-@Singleton
 public class LikeDao {
 
     private final Database database;

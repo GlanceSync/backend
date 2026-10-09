@@ -6,9 +6,7 @@ import com.glancesync.modules.block.repo.BlockDao;
 import com.glancesync.modules.notification.service.NotificationService;
 import com.glancesync.modules.user.repo.UserDao;
 import com.glancesync.web.HttpStatus;
-import jakarta.inject.Singleton;
 
-@Singleton
 public class BlockService {
 
     private final BlockDao blockDao;

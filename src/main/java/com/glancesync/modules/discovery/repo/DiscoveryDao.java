@@ -6,12 +6,10 @@ import com.glancesync.modules.discovery.dto.DiscoveryFilters;
 import com.glancesync.modules.user.enums.Gender;
 import com.glancesync.modules.user.enums.SexualPreference;
 import com.glancesync.modules.user.entity.User;
-import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Singleton
 public class DiscoveryDao {
 
     /** Within this distance, or in the same city, counts as "your area". */

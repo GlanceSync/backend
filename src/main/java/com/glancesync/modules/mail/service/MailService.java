@@ -1,7 +1,6 @@
 package com.glancesync.modules.mail.service;
 
 import com.glancesync.modules.mail.config.MailConfig;
-import jakarta.inject.Singleton;
 import jakarta.mail.Authenticator;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
@@ -23,7 +22,6 @@ import java.util.concurrent.ExecutorService;
  * response. With no SMTP host configured (local development) the message is written
  * to the log instead.
  */
-@Singleton
 public class MailService {
 
     private static final Logger LOG = LoggerFactory.getLogger(MailService.class);
