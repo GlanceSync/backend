@@ -8,6 +8,7 @@ import com.glancesync.modules.user.enums.SexualPreference;
 import com.glancesync.modules.user.entity.User;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class DiscoveryDao {
@@ -23,11 +24,17 @@ public class DiscoveryDao {
     /** Distance stops costing more past this, and people without one are treated as this far. */
     static final double SCORE_DISTANCE_CAP_KM = 200;
 
-    public record Row(UUID id, String username, UUID profilePictureId, Gender gender, Integer age, String city,
-                      Double distanceMeters, int fameRating, int commonTags) {
+    /** {@code pictureIds} starts with the profile picture, then the rest oldest first. */
+    public record Row(UUID id, String username, String firstName, String biography, UUID profilePictureId,
+                      Gender gender, Integer age, String city, Double distanceMeters, int fameRating, int commonTags,
+                      List<String> interests, List<UUID> pictureIds) {
 
         public String avatarUrl() {
             return profilePictureId == null ? null : User.pictureUrl(id, profilePictureId);
+        }
+
+        public List<String> pictureUrls() {
+            return pictureIds.stream().map(pictureId -> User.pictureUrl(id, pictureId)).toList();
         }
     }
 
@@ -39,7 +46,7 @@ public class DiscoveryDao {
 
     /**
      * Only people whose gender and orientation fit the viewer's both ways, leaving out
-     * anyone the viewer already liked.
+     * anyone the viewer already liked when {@code filters.excludeLiked()}.
      */
     public List<Row> find(User viewer, DiscoveryFilters filters) {
         List<Object> params = new ArrayList<>();
@@ -50,7 +57,13 @@ public class DiscoveryDao {
         params.add(viewer.id());
 
         // --- Computed columns ---------------------------------------------------------
-        sql.append("SELECT * FROM (SELECT u.id, u.username, u.profile_picture_id, "
+        // Tags and pictures sit in the outer select, so they are only gathered for the page.
+        sql.append("SELECT c.*, "
+                + "ARRAY(SELECT i.name FROM user_interests ui JOIN interests i ON i.id = ui.interest_id "
+                + "WHERE ui.user_id = c.id ORDER BY i.name) AS interests, "
+                + "ARRAY(SELECT p.id::text FROM user_pictures p WHERE p.user_id = c.id "
+                + "ORDER BY (p.id = c.profile_picture_id) DESC, p.created_at, p.id) AS picture_ids "
+                + "FROM (SELECT u.id, u.username, u.first_name, u.biography, u.profile_picture_id, "
                 + "u.gender, u.city, u.fame_rating, "
                 + "EXTRACT(YEAR FROM age(current_date, u.birth_date))::int AS age, "
                 + "ST_Distance(u.location, me.location) AS distance_m, ");
@@ -84,8 +97,10 @@ public class DiscoveryDao {
         params.add(viewer.id());
         params.add(viewer.id());
 
-        sql.append("AND NOT EXISTS (SELECT 1 FROM likes l WHERE l.liker_id = ? AND l.liked_id = u.id AND l.unliked_at IS NULL) ");
-        params.add(viewer.id());
+        if (filters.excludeLiked()) {
+            sql.append("AND NOT EXISTS (SELECT 1 FROM likes l WHERE l.liker_id = ? AND l.liked_id = u.id AND l.unliked_at IS NULL) ");
+            params.add(viewer.id());
+        }
         appendOrientation(sql, params, viewer);
 
         // --- Filters on stored columns -------------------------------------------------
@@ -145,13 +160,17 @@ public class DiscoveryDao {
         return database.query(sql.toString(), rs -> new Row(
                         rs.getObject("id", UUID.class),
                         rs.getString("username"),
+                        rs.getString("first_name"),
+                        rs.getString("biography"),
                         rs.getObject("profile_picture_id", UUID.class),
                         Gender.fromDb(rs.getString("gender")),
                         rs.getObject("age", Integer.class),
                         rs.getString("city"),
                         rs.getObject("distance_m", Double.class),
                         rs.getInt("fame_rating"),
-                        rs.getInt("common_tags")),
+                        rs.getInt("common_tags"),
+                        List.of((String[]) rs.getArray("interests").getArray()),
+                        Arrays.stream((String[]) rs.getArray("picture_ids").getArray()).map(UUID::fromString).toList()),
                 params.toArray());
     }
 

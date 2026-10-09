@@ -72,10 +72,7 @@ public class DiscoveryService {
      * for this request only. Nothing is saved here.
      */
     public List<DiscoveryCard> discover(UUID selfId, DiscoveryPreferences overrides, Integer limit, Integer offset) {
-        User viewer = requireUser(selfId);
-        if (!viewer.profileCompleted()) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "Complete your profile to discover people.");
-        }
+        User viewer = requireCompleteProfile(selfId);
         DiscoveryPreferences saved = preferences(selfId);
         DiscoveryPreferences criteria = normalise(saved.overriddenBy(normalise(overrides)));
 
@@ -88,13 +85,37 @@ public class DiscoveryService {
             criteria = criteria.withoutDistance();
         }
 
-        DiscoveryFilters filters = toFilters(criteria, page(limit, offset));
+        return find(viewer, toFilters(criteria, true, page(limit, offset)));
+    }
+
+    /**
+     * Advanced search: only the criteria given, never the saved preferences, and people the
+     * viewer already liked are included. Gender and orientation still have to match both ways.
+     */
+    public List<DiscoveryCard> search(UUID selfId, DiscoveryPreferences criteria, Integer limit, Integer offset) {
+        User viewer = requireCompleteProfile(selfId);
+        DiscoveryPreferences normalised = normalise(criteria);
+        if (normalised.distance() != null && !hasCoordinates(viewer)) {
+            throw invalid("distance", "Share your location with coordinates to search by distance, or use a city.");
+        }
+        return find(viewer, toFilters(normalised, false, page(limit, offset)));
+    }
+
+    private List<DiscoveryCard> find(User viewer, DiscoveryFilters filters) {
         return discoveryDao.find(viewer, filters).stream()
-                .map(row -> new DiscoveryCard(row.id(), row.username(), row.avatarUrl(), row.gender(), row.age(),
-                        row.city(), ApproximateDistance.km(row.distanceMeters()),
-                        ApproximateDistance.label(row.distanceMeters()), row.fameRating(), row.commonTags(),
-                        presence.isOnline(row.id())))
+                .map(row -> new DiscoveryCard(row.id(), row.username(), row.firstName(), row.biography(),
+                        row.avatarUrl(), row.pictureUrls(), row.gender(), row.age(), row.city(),
+                        ApproximateDistance.km(row.distanceMeters()), ApproximateDistance.label(row.distanceMeters()),
+                        row.fameRating(), row.commonTags(), row.interests(), presence.isOnline(row.id())))
                 .toList();
+    }
+
+    private User requireCompleteProfile(UUID selfId) {
+        User viewer = requireUser(selfId);
+        if (!viewer.profileCompleted()) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Complete your profile to discover people.");
+        }
+        return viewer;
     }
 
     /** Validates and normalises the preferences, throwing an exception for any invalid field. */
@@ -169,13 +190,13 @@ public class DiscoveryService {
         return new Page(l, o);
     }
 
-    private static DiscoveryFilters toFilters(DiscoveryPreferences p, Page page) {
+    private static DiscoveryFilters toFilters(DiscoveryPreferences p, boolean excludeLiked, Page page) {
         DiscoverySort sort = parseSort(p.sort());
         boolean ascending = p.order() == null
                 ? sort == null || sort.ascendingByDefault()
                 : p.order().equals("asc");
         return new DiscoveryFilters(p.minAge(), p.maxAge(), p.minFame(), p.maxFame(), p.distance(), p.city(),
-                p.tags(), p.minCommonTags(), sort, ascending, page.limit(), page.offset());
+                p.tags(), p.minCommonTags(), sort, ascending, excludeLiked, page.limit(), page.offset());
     }
 
     /** age | distance | fame | commonTags, case-insensitive. */
