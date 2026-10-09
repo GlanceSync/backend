@@ -18,5 +18,6 @@ public record ProfileResponse(
         LocalDate birthDate, Double latitude, Double longitude, Double locationAccuracy,
         LocationSource locationSource, Boolean showOnMap, Boolean completed,
         // Someone else's profile only.
-        Integer distanceKm, String distance, Boolean likedByMe, Boolean likesMe, Boolean connected) {
+        Integer distanceKm, String distance, Boolean likedByMe, Boolean likesMe, Boolean connected,
+        Boolean blocked, Boolean blockedByThem) {
 }

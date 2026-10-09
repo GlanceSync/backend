@@ -1,5 +1,6 @@
 package com.glancesync.web;
 
+import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.glancesync.common.dto.ErrorResponse;
 import com.glancesync.common.exception.ApiException;
@@ -289,7 +290,7 @@ public final class SparkRouter {
             else if (parameter.isAnnotationPresent(Body.class)) {
                 if (parameter.getType() == byte[].class) args[i] = request.bodyAsBytes();
                 else if (request.body() == null || request.body().isBlank()) args[i] = null;
-                else args[i] = json.readValue(request.body(), json.getTypeFactory().constructType(parameter.getParameterizedType()));
+                else args[i] = readBody(request.body(), parameter.getParameterizedType());
             } else if (parameter.isAnnotationPresent(PathVariable.class)) {
                 PathVariable annotation = parameter.getAnnotation(PathVariable.class);
                 String name = annotation.value().isBlank() ? parameter.getName() : annotation.value();
@@ -305,6 +306,15 @@ public final class SparkRouter {
             }
         }
         return args;
+    }
+
+    /** Unreadable JSON, a wrong type or an unknown enum value is the client's mistake: 400, not 500. */
+    private Object readBody(String body, Type type) {
+        try {
+            return json.readValue(body, json.getTypeFactory().constructType(type));
+        } catch (JacksonException e) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "The request body is not valid.");
+        }
     }
 
     private Object convert(String value, Class<?> type) {

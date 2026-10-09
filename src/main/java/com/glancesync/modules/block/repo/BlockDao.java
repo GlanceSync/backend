@@ -36,6 +36,14 @@ public class BlockDao {
                 userA, userB, userB, userA).isPresent();
     }
 
+    /** True when {@code blockerId} has blocked {@code blockedId}; one direction only. */
+    public boolean hasBlocked(UUID blockerId, UUID blockedId) {
+        return database.queryOne(
+                "SELECT 1 FROM blocks WHERE blocker_id = ? AND blocked_id = ?",
+                rs -> true,
+                blockerId, blockedId).isPresent();
+    }
+
     /** Everyone this user has blocked. */
     public Set<UUID> blockedBy(UUID blockerId) {
         List<UUID> ids = database.query(
