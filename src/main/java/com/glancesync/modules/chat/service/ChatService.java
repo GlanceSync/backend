@@ -9,7 +9,7 @@ import com.glancesync.modules.chat.entity.Message;
 import com.glancesync.modules.chat.repo.MessageDao;
 import com.glancesync.modules.like.service.LikeService;
 import com.glancesync.modules.user.repo.UserDao;
-import io.micronaut.http.HttpStatus;
+import com.glancesync.web.HttpStatus;
 import jakarta.inject.Singleton;
 
 import java.util.ArrayList;

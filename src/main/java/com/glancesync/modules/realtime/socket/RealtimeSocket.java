@@ -13,15 +13,13 @@ import com.glancesync.modules.realtime.service.PresenceRegistry;
 import com.glancesync.modules.realtime.service.RealtimePush;
 import com.glancesync.modules.security.service.JwtService;
 import com.glancesync.modules.user.repo.UserDao;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.json.JsonMapper;
-import io.micronaut.websocket.CloseReason;
-import io.micronaut.websocket.WebSocketSession;
-import io.micronaut.websocket.annotation.OnClose;
-import io.micronaut.websocket.annotation.OnError;
-import io.micronaut.websocket.annotation.OnMessage;
-import io.micronaut.websocket.annotation.OnOpen;
-import io.micronaut.websocket.annotation.ServerWebSocket;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketError;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
+import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,17 +33,15 @@ import java.time.Instant;
  * handshake automatically. That is precisely why sessions are cookie-based: the
  * browser's WebSocket API cannot set an Authorization header.
  */
-@ServerWebSocket("/ws")
+@WebSocket
 public class RealtimeSocket {
 
     private static final Logger LOG = LoggerFactory.getLogger(RealtimeSocket.class);
-    private static final String USER_ID = "userId";
-
     private final JwtService jwtService;
     private final PresenceRegistry presence;
     private final UserDao userDao;
     private final ChatService chatService;
-    private final JsonMapper jsonMapper;
+    private final ObjectMapper jsonMapper;
     private final RealtimePush push;
     private final NotificationService notifications;
     private final CallRegistry calls;
@@ -53,7 +49,7 @@ public class RealtimeSocket {
     private final BlockService blocks;
 
     public RealtimeSocket(JwtService jwtService, PresenceRegistry presence,
-                          UserDao userDao, ChatService chatService, JsonMapper jsonMapper,
+                          UserDao userDao, ChatService chatService, ObjectMapper jsonMapper,
                           RealtimePush push, NotificationService notifications,
                           CallRegistry calls, CallLogService callLog, BlockService blocks) {
         this.jwtService = jwtService;
@@ -72,20 +68,20 @@ public class RealtimeSocket {
      * The browser WebSocket API cannot set headers, so the access token comes in the
      * query string: /ws?token=... It is short-lived, and only checked at the handshake.
      */
-    @OnOpen
-    public void onOpen(WebSocketSession session, HttpRequest<?> request) {
-        UUID userId = request.getParameters()
-                .getFirst("token")
+    @OnWebSocketConnect
+    public void onOpen(Session session) {
+        UUID userId = java.util.Optional.ofNullable(session.getUpgradeRequest().getParameterMap().get("token"))
+                .filter(values -> !values.isEmpty())
+                .map(values -> values.get(0))
                 .flatMap(jwtService::parseAccessToken)
                 .orElse(null);
 
         if (userId == null) {
             // Nothing is registered for this session, so no presence event is emitted.
-            session.close(CloseReason.POLICY_VIOLATION);
+            session.close(1008, "Authentication required");
             return;
         }
 
-        session.put(USER_ID, userId);
         boolean cameOnline = presence.register(userId, session);
 
         // Tell the new client who is already here.
@@ -101,8 +97,8 @@ public class RealtimeSocket {
         }
     }
 
-    @OnClose
-    public void onClose(WebSocketSession session) {
+    @OnWebSocketClose
+    public void onClose(Session session, int statusCode, String reason) {
         UUID userId = userId(session);
         if (userId == null) {
             return;
@@ -119,8 +115,8 @@ public class RealtimeSocket {
         }
     }
 
-    @OnMessage
-    public void onMessage(String raw, WebSocketSession session) {
+    @OnWebSocketMessage
+    public void onMessage(Session session, String raw) {
         UUID userId = userId(session);
         if (userId == null) {
             return;
@@ -293,20 +289,20 @@ public class RealtimeSocket {
         push.toUser(userId, message);
     }
 
-    @OnError
-    public void onError(WebSocketSession session, Throwable error) {
-        LOG.warn("WebSocket error on session {}", session.getId(), error);
+    @OnWebSocketError
+    public void onError(Session session, Throwable error) {
+        LOG.warn("WebSocket error on session {}", session == null ? "unknown" : session.getRemoteAddress(), error);
     }
 
-    private UUID userId(WebSocketSession session) {
-        return session.get(USER_ID, UUID.class).orElse(null);
+    private UUID userId(Session session) {
+        return presence.userId(session);
     }
 
     private void broadcastExcept(UUID exceptUserId, Object message) {
         push.toEveryoneExcept(exceptUserId, message);
     }
 
-    private void send(WebSocketSession session, Object message) {
+    private void send(Session session, Object message) {
         push.toSession(session, message);
     }
 }

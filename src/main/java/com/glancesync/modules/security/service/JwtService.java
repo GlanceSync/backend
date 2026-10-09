@@ -7,7 +7,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import io.micronaut.context.annotation.Value;
+import com.glancesync.web.Value;
 import jakarta.inject.Singleton;
 
 import javax.crypto.SecretKey;

@@ -6,14 +6,14 @@ import com.glancesync.modules.security.filter.JwtAuthenticationFilter;
 import com.glancesync.modules.user.dto.AccountRequest;
 import com.glancesync.modules.user.dto.AccountResponse;
 import com.glancesync.modules.user.service.AccountService;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.MediaType;
-import io.micronaut.http.annotation.Body;
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Get;
-import io.micronaut.http.annotation.Put;
+import com.glancesync.web.Nullable;
+import com.glancesync.web.HttpRequest;
+import com.glancesync.web.HttpStatus;
+import com.glancesync.web.MediaType;
+import com.glancesync.web.annotation.Body;
+import com.glancesync.web.annotation.Controller;
+import com.glancesync.web.annotation.Get;
+import com.glancesync.web.annotation.Put;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "Users")

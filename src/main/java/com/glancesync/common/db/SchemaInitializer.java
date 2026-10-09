@@ -1,9 +1,6 @@
 package com.glancesync.common.db;
 
-import io.micronaut.context.annotation.Value;
-import io.micronaut.context.event.ShutdownEvent;
-import io.micronaut.context.event.StartupEvent;
-import io.micronaut.runtime.event.annotation.EventListener;
+import com.glancesync.web.Value;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,8 +40,7 @@ public class SchemaInitializer {
         this.seed = seed;
     }
 
-    @EventListener
-    void onStartup(StartupEvent event) {
+    public void onStartup() {
         switch (mode) {
             case NONE -> LOG.info("ddl-auto=none: database schema left untouched");
             case VALIDATE -> validate();
@@ -69,8 +65,7 @@ public class SchemaInitializer {
         }
     }
 
-    @EventListener
-    void onShutdown(ShutdownEvent event) {
+    public void onShutdown() {
         if (mode == DdlAuto.CREATE_DROP) {
             LOG.warn("ddl-auto=create-drop: dropping every table and all data");
             database.execute(DROP_ALL);

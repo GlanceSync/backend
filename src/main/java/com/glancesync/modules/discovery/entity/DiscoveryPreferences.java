@@ -1,10 +1,8 @@
 package com.glancesync.modules.discovery.entity;
 
-import io.micronaut.serde.annotation.Serdeable;
 
 import java.util.List;
 
-@Serdeable
 public record DiscoveryPreferences(Integer minAge, Integer maxAge, Integer minFame, Integer maxFame,
                                    Double distance, String city, List<String> tags, Integer minCommonTags,
                                    String sort, String order) {

@@ -9,8 +9,8 @@ import com.glancesync.modules.security.service.PasswordHasher;
 import com.glancesync.modules.security.service.SecureTokens;
 import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.UserDao;
-import io.micronaut.context.annotation.Value;
-import io.micronaut.http.HttpStatus;
+import com.glancesync.web.Value;
+import com.glancesync.web.HttpStatus;
 import jakarta.inject.Singleton;
 
 import java.time.Duration;

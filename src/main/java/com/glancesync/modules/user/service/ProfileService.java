@@ -19,7 +19,7 @@ import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.PictureDao;
 import com.glancesync.modules.user.repo.UserDao;
 import com.glancesync.modules.visit.service.ProfileViewService;
-import io.micronaut.http.HttpStatus;
+import com.glancesync.web.HttpStatus;
 import jakarta.inject.Singleton;
 
 import java.time.LocalDate;

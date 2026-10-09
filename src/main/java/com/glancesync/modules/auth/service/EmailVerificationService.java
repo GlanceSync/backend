@@ -7,7 +7,7 @@ import com.glancesync.modules.mail.service.AccountMails;
 import com.glancesync.modules.security.service.SecureTokens;
 import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.UserDao;
-import io.micronaut.context.annotation.Value;
+import com.glancesync.web.Value;
 import jakarta.inject.Singleton;
 
 import java.time.Duration;

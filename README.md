@@ -1,6 +1,6 @@
 # GlanceSync Backend
 
-Backend service for GlanceSync, built with [Micronaut](https://micronaut.io) 4.10.17.
+Backend service for GlanceSync, built with Spark Java 2.9.4.
 
 ## Requirements
 
@@ -21,16 +21,18 @@ cd GlanceSync/backend
 Using the Maven Wrapper (recommended):
 
 ```bash
-./mvnw mn:run
+./mvnw compile exec:java -Dexec.mainClass=com.glancesync.Application
 ```
 
 Or, if you have Maven installed globally:
 
 ```bash
-mvn mn:run
+mvn compile exec:java -Dexec.mainClass=com.glancesync.Application
 ```
 
-The application starts on `http://localhost:8080` by default.
+The application starts on `http://localhost:8083` by default.
+
+Swagger UI is available at `http://localhost:8083/swagger-ui.html` (or the configured server port).
 
 ### Build a JAR
 
@@ -57,15 +59,11 @@ Application configuration lives in `src/main/resources/application.properties`.
 ## Tech Stack
 
 - Java 17
-- Micronaut 4.10.17 (Netty HTTP server)
-- Micronaut Serde (Jackson) for JSON serialization
+- Spark Java 2.9.4 (embedded Jetty HTTP server)
+- Jackson for JSON serialization
+- JDBC with hand-written SQL and HikariCP connection pooling
 - Logback for logging
 - JUnit 5 for testing
 
-## Documentation
-
-- [Micronaut User Guide](https://docs.micronaut.io/4.10.17/guide/index.html)
-- [Micronaut API Reference](https://docs.micronaut.io/4.10.17/api/index.html)
-- [Micronaut Configuration Reference](https://docs.micronaut.io/4.10.17/guide/configurationreference.html)
-- [Micronaut Guides](https://guides.micronaut.io/index.html)
-- [Micronaut Maven Plugin](https://micronaut-projects.github.io/micronaut-maven-plugin/latest/)
+Spark-specific HTTP wiring lives in `com.glancesync.web`; the domain, service, DAO,
+request, and response models are independent of the web server.

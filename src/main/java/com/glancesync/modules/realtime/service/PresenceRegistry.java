@@ -1,7 +1,7 @@
 package com.glancesync.modules.realtime.service;
 
 import java.util.UUID;
-import io.micronaut.websocket.WebSocketSession;
+import org.eclipse.jetty.websocket.api.Session;
 import jakarta.inject.Singleton;
 
 import java.util.Collection;
@@ -21,15 +21,17 @@ import java.util.concurrent.ConcurrentHashMap;
 @Singleton
 public class PresenceRegistry {
 
-    private final Map<UUID, Set<WebSocketSession>> sessionsByUser = new ConcurrentHashMap<>();
+    private final Map<UUID, Set<Session>> sessionsByUser = new ConcurrentHashMap<>();
+    private final Map<Session, UUID> usersBySession = new ConcurrentHashMap<>();
 
     /** @return true when this connection is the user's first, i.e. they just came online. */
-    public boolean register(UUID userId, WebSocketSession session) {
+    public boolean register(UUID userId, Session session) {
         boolean[] cameOnline = {false};
         // compute() runs atomically, so a connect racing a disconnect cannot lose its entry.
         sessionsByUser.compute(userId, (key, sessions) -> {
-            Set<WebSocketSession> live = sessions == null ? ConcurrentHashMap.newKeySet() : sessions;
+            Set<Session> live = sessions == null ? ConcurrentHashMap.newKeySet() : sessions;
             live.add(session);
+            usersBySession.put(session, userId);
             cameOnline[0] = live.size() == 1;
             return live;
         });
@@ -37,7 +39,8 @@ public class PresenceRegistry {
     }
 
     /** @return true when this was the user's last connection, i.e. they just went offline. */
-    public boolean unregister(UUID userId, WebSocketSession session) {
+    public boolean unregister(UUID userId, Session session) {
+        usersBySession.remove(session);
         boolean[] wentOffline = {false};
         sessionsByUser.computeIfPresent(userId, (key, sessions) -> {
             sessions.remove(session);
@@ -51,7 +54,7 @@ public class PresenceRegistry {
     }
 
     public boolean isOnline(UUID userId) {
-        Set<WebSocketSession> sessions = sessionsByUser.get(userId);
+        Set<Session> sessions = sessionsByUser.get(userId);
         return sessions != null && !sessions.isEmpty();
     }
 
@@ -60,14 +63,18 @@ public class PresenceRegistry {
     }
 
     /** Every open session, used to broadcast presence changes to all connected clients. */
-    public Collection<WebSocketSession> allSessions() {
+    public Collection<Session> allSessions() {
         return sessionsByUser.values().stream()
                 .flatMap(Set::stream)
                 .toList();
     }
 
     /** The sessions belonging to one user. Phase 3 delivers chat messages through this. */
-    public Collection<WebSocketSession> sessionsFor(UUID userId) {
+    public Collection<Session> sessionsFor(UUID userId) {
         return List.copyOf(sessionsByUser.getOrDefault(userId, Set.of()));
+    }
+
+    public UUID userId(Session session) {
+        return usersBySession.get(session);
     }
 }

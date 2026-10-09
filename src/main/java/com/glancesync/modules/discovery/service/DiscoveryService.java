@@ -12,7 +12,7 @@ import com.glancesync.modules.discovery.repo.DiscoveryPreferencesDao;
 import com.glancesync.modules.realtime.service.PresenceRegistry;
 import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.UserDao;
-import io.micronaut.http.HttpStatus;
+import com.glancesync.web.HttpStatus;
 import jakarta.inject.Singleton;
 
 import java.util.List;

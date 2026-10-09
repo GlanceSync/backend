@@ -5,7 +5,7 @@ import com.glancesync.common.exception.ApiException;
 import com.glancesync.modules.fame.service.FameService;
 import com.glancesync.modules.report.repo.ReportDao;
 import com.glancesync.modules.user.repo.UserDao;
-import io.micronaut.http.HttpStatus;
+import com.glancesync.web.HttpStatus;
 import jakarta.inject.Singleton;
 
 import java.util.Map;

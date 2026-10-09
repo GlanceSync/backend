@@ -1,10 +1,8 @@
 package com.glancesync.modules.user.enums;
 
-import io.micronaut.serde.annotation.Serdeable;
 
 import java.util.Locale;
 
-@Serdeable
 public enum LocationSource {
     GPS, MANUAL;
 

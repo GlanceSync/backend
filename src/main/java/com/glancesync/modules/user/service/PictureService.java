@@ -7,8 +7,8 @@ import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.PictureDao;
 import com.glancesync.modules.user.repo.UserDao;
 import com.glancesync.modules.user.storage.PictureStorage;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.MediaType;
+import com.glancesync.web.HttpStatus;
+import com.glancesync.web.MediaType;
 import jakarta.inject.Singleton;
 
 import java.util.List;

@@ -1,6 +1,6 @@
 package com.glancesync.modules.user.storage;
 
-import io.micronaut.context.annotation.Value;
+import com.glancesync.web.Value;
 import jakarta.inject.Singleton;
 
 import java.io.IOException;

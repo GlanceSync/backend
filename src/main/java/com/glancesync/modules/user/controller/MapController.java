@@ -6,12 +6,12 @@ import com.glancesync.common.exception.ApiException;
 import com.glancesync.modules.security.filter.JwtAuthenticationFilter;
 import com.glancesync.modules.user.dto.MapUserResponse;
 import com.glancesync.modules.user.service.MapService;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Get;
-import io.micronaut.http.annotation.QueryValue;
+import com.glancesync.web.Nullable;
+import com.glancesync.web.HttpRequest;
+import com.glancesync.web.HttpStatus;
+import com.glancesync.web.annotation.Controller;
+import com.glancesync.web.annotation.Get;
+import com.glancesync.web.annotation.QueryValue;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "Users")

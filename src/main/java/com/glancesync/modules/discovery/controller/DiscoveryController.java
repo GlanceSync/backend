@@ -6,12 +6,12 @@ import com.glancesync.modules.discovery.dto.DiscoveryCard;
 import com.glancesync.modules.discovery.entity.DiscoveryPreferences;
 import com.glancesync.modules.discovery.service.DiscoveryService;
 import com.glancesync.modules.security.filter.JwtAuthenticationFilter;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Get;
-import io.micronaut.http.annotation.QueryValue;
+import com.glancesync.web.Nullable;
+import com.glancesync.web.HttpRequest;
+import com.glancesync.web.HttpStatus;
+import com.glancesync.web.annotation.Controller;
+import com.glancesync.web.annotation.Get;
+import com.glancesync.web.annotation.QueryValue;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.Arrays;

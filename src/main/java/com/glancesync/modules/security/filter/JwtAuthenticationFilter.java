@@ -3,14 +3,11 @@ package com.glancesync.modules.security.filter;
 import java.util.UUID;
 import com.glancesync.common.dto.ErrorResponse;
 import com.glancesync.modules.security.service.JwtService;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.http.HttpHeaders;
-import io.micronaut.http.HttpMethod;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.annotation.RequestFilter;
-import io.micronaut.http.annotation.ServerFilter;
+import com.glancesync.web.HttpHeaders;
+import com.glancesync.web.HttpMethod;
+import com.glancesync.web.HttpRequest;
+import com.glancesync.web.HttpResponse;
+import com.glancesync.web.HttpStatus;
 
 import java.util.Optional;
 import java.util.Set;
@@ -21,7 +18,6 @@ import java.util.regex.Pattern;
  * Expects "Authorization: Bearer <access token>"; on success the caller's user id is
  * attached to the request for controllers to read.
  */
-@ServerFilter("/api/**")
 public class JwtAuthenticationFilter {
 
     public static final String USER_ID_ATTRIBUTE = "glancesync.userId";
@@ -53,8 +49,6 @@ public class JwtAuthenticationFilter {
         this.jwtService = jwtService;
     }
 
-    @RequestFilter
-    @Nullable
     public HttpResponse<?> authenticate(HttpRequest<?> request) {
         if (isPublic(request)) {
             return null;
