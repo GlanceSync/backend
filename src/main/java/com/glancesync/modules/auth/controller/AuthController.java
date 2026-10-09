@@ -1,6 +1,5 @@
 package com.glancesync.modules.auth.controller;
 
-import com.glancesync.common.dto.ErrorResponse;
 import com.glancesync.common.exception.ApiException;
 import com.glancesync.modules.auth.dto.AuthResponse;
 import com.glancesync.modules.auth.dto.ForgotPasswordRequest;
@@ -111,9 +110,7 @@ public class AuthController {
         return refreshCookie.extract(request)
                 .flatMap(tokenService::refresh)
                 .<HttpResponse<?>>map(this::withTokens)
-                .orElseGet(() -> HttpResponse.status(HttpStatus.UNAUTHORIZED)
-                        .cookie(refreshCookie.buildExpired())
-                        .body(ErrorResponse.of("Your session has expired. Please sign in again.")));
+                .orElseGet(() -> HttpResponse.noContent().cookie(refreshCookie.buildExpired()));
     }
 
     @Post("/logout")
