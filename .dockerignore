@@ -1,0 +1,7 @@
+.env
+.git
+.github
+.vscode
+target
+data
+deploy
