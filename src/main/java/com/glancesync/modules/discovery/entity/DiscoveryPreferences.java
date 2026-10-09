@@ -25,6 +25,11 @@ public record DiscoveryPreferences(Integer minAge, Integer maxAge, Integer minFa
                 order);
     }
 
+    public DiscoveryPreferences withoutSort() {
+        return new DiscoveryPreferences(minAge, maxAge, minFame, maxFame, distance, city, tags, minCommonTags, null,
+                null);
+    }
+
     private static <T> T pick(T override, T saved) {
         return override != null ? override : saved;
     }

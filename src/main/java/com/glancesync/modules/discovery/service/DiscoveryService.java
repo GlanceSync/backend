@@ -36,6 +36,7 @@ public class DiscoveryService {
     private static final int MAX_TAGS = 10;
     private static final int MAX_CITY_LENGTH = 100;
     private static final double MAX_DISTANCE_KM = 20_000;
+    private static final String RECOMMENDED = "recommended";
 
     private final DiscoveryDao discoveryDao;
     private final DiscoveryPreferencesDao preferencesDao;
@@ -75,6 +76,10 @@ public class DiscoveryService {
         User viewer = requireCompleteProfile(selfId);
         DiscoveryPreferences saved = preferences(selfId);
         DiscoveryPreferences criteria = normalise(saved.overriddenBy(normalise(overrides)));
+        // A missing sort falls back to the saved one; "recommended" asks for the default ranking instead.
+        if (isRecommended(overrides.sort())) {
+            criteria = criteria.withoutSort();
+        }
 
         if (criteria.distance() != null && !hasCoordinates(viewer)) {
             if (overrides.distance() != null) {
@@ -199,9 +204,9 @@ public class DiscoveryService {
                 p.tags(), p.minCommonTags(), sort, ascending, excludeLiked, page.limit(), page.offset());
     }
 
-    /** age | distance | fame | commonTags, case-insensitive. */
+    /** age | distance | fame | commonTags, case-insensitive; recommended (or nothing) is the default ranking. */
     private static DiscoverySort parseSort(String sort) {
-        if (sort == null || sort.isBlank()) {
+        if (sort == null || sort.isBlank() || isRecommended(sort)) {
             return null;
         }
         return switch (sort.trim().toLowerCase(Locale.ROOT)) {
@@ -209,8 +214,12 @@ public class DiscoveryService {
             case "distance" -> DiscoverySort.DISTANCE;
             case "fame" -> DiscoverySort.FAME;
             case "commontags", "common_tags", "tags" -> DiscoverySort.COMMON_TAGS;
-            default -> throw invalid("sort", "Sort by age, distance, fame or commonTags.");
+            default -> throw invalid("sort", "Sort by recommended, age, distance, fame or commonTags.");
         };
+    }
+
+    private static boolean isRecommended(String sort) {
+        return sort != null && sort.trim().equalsIgnoreCase(RECOMMENDED);
     }
 
     private static boolean hasCoordinates(User user) {
