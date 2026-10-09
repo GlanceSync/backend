@@ -30,7 +30,7 @@ Or, if you have Maven installed globally:
 mvn compile exec:java -Dexec.mainClass=com.glancesync.Application
 ```
 
-The application starts on `http://localhost:8083` by default.
+The application starts on `http://localhost:8080` by default.
 
 ### Run with auto-reload (development)
 
@@ -42,7 +42,7 @@ Watches `src/main/java`, `src/main/resources`, `pom.xml` and `.env`. After each 
 the running app, recompiles, and starts it again. If compilation fails, it waits for the next change.
 Dependency changes in `pom.xml` need a full restart of the command. Press Ctrl-C to quit.
 
-Swagger UI is available at `http://localhost:8083/swagger-ui.html` (or the configured server port).
+Swagger UI is available at `http://localhost:8080/swagger-ui.html` (or the configured server port).
 
 ### Build a JAR
 
