@@ -1,11 +1,13 @@
 package com.glancesync.modules.auth.service;
 
 import java.util.UUID;
+import com.glancesync.common.exception.ApiException;
 import com.glancesync.modules.auth.repo.RefreshTokenDao;
 import com.glancesync.modules.security.service.JwtService;
 import com.glancesync.modules.security.service.SecureTokens;
 import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.UserDao;
+import com.glancesync.web.HttpStatus;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -19,6 +21,9 @@ public class TokenService {
     public record Tokens(User user, String accessToken, String refreshToken) {
     }
 
+    public static final String FROZEN_MESSAGE =
+            "This account has been frozen by an administrator after being reported.";
+
     private final JwtService jwtService;
     private final RefreshTokenDao refreshTokenDao;
     private final UserDao userDao;
@@ -30,6 +35,9 @@ public class TokenService {
     }
 
     public Tokens issue(User user) {
+        if (!user.active()) {
+            throw new ApiException(HttpStatus.FORBIDDEN, FROZEN_MESSAGE);
+        }
         String refreshToken = jwtService.generateRefreshToken(user);
         refreshTokenDao.deleteExpiredFor(user.id());
         refreshTokenDao.create(SecureTokens.sha256(refreshToken), user.id(),
@@ -46,6 +54,7 @@ public class TokenService {
         return refreshTokenDao.consume(SecureTokens.sha256(refreshToken))
                 .filter(userId::equals)
                 .flatMap(userDao::findById)
+                .filter(User::active)
                 .map(this::issue);
     }
 

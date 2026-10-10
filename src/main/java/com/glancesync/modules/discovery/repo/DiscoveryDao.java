@@ -89,7 +89,7 @@ public class DiscoveryDao {
                 + "ON mine.interest_id = theirs.interest_id "
                 + "WHERE theirs.user_id = u.id AND mine.user_id = ?) common ");
         params.add(viewer.id());
-        sql.append("WHERE u.id <> ? AND u.profile_completed ");
+        sql.append("WHERE u.id <> ? AND u.profile_completed AND u.is_active ");
         params.add(viewer.id());
 
         sql.append("AND NOT EXISTS (SELECT 1 FROM blocks b WHERE (b.blocker_id = ? AND b.blocked_id = u.id) "

@@ -124,6 +124,7 @@ public class AuthController {
         UserResponse user = JwtAuthenticationFilter.bearerToken(request)
                 .flatMap(jwtService::parseAccessToken)
                 .flatMap(userDao::findById)
+                .filter(User::active)
                 .map(UserResponse::of)
                 .orElse(null);
         return new SessionResponse(user);

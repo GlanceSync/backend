@@ -5,6 +5,7 @@ import java.util.UUID;
 import com.glancesync.modules.user.enums.Gender;
 import com.glancesync.modules.user.enums.LocationSource;
 import com.glancesync.modules.user.enums.SexualPreference;
+import com.glancesync.modules.user.enums.UserRole;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -34,7 +35,13 @@ public record User(
     Double locationAccuracyM,
     boolean showOnMap,
     int fameRating,
-    boolean profileCompleted) {
+    boolean profileCompleted,
+    UserRole role,
+    boolean active) {
+
+    public boolean admin() {
+        return role == UserRole.ADMIN;
+    }
 
     public boolean emailVerified() {
         return emailVerifiedAt != null;

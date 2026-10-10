@@ -16,6 +16,7 @@ import com.glancesync.modules.notification.controller.NotificationsController;
 import com.glancesync.modules.oauth.controller.OAuthController;
 import com.glancesync.modules.realtime.socket.RealtimeSocket;
 import com.glancesync.modules.report.controller.ReportsController;
+import com.glancesync.modules.admin.controller.AdminController;
 import com.glancesync.modules.security.filter.JwtAuthenticationFilter;
 import com.glancesync.modules.user.controller.AccountController;
 import com.glancesync.modules.user.controller.MapController;
@@ -63,6 +64,7 @@ public final class Application {
         router.add(container.get(ReportsController.class));
         router.add(container.get(EventsController.class));
         router.add(container.get(CallsController.class));
+        router.add(container.get(AdminController.class));
         router.register();
         router.registerSwagger();
 

@@ -74,6 +74,7 @@ public class RealtimeSocket {
                 .filter(values -> !values.isEmpty())
                 .map(values -> values.get(0))
                 .flatMap(jwtService::parseAccessToken)
+                .filter(id -> userDao.findAccess(id).filter(UserDao.Access::active).isPresent())
                 .orElse(null);
 
         if (userId == null) {

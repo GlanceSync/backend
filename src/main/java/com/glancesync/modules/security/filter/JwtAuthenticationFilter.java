@@ -2,7 +2,9 @@ package com.glancesync.modules.security.filter;
 
 import java.util.UUID;
 import com.glancesync.common.dto.ErrorResponse;
+import com.glancesync.modules.auth.service.TokenService;
 import com.glancesync.modules.security.service.JwtService;
+import com.glancesync.modules.user.repo.UserDao;
 import com.glancesync.web.HttpHeaders;
 import com.glancesync.web.HttpMethod;
 import com.glancesync.web.HttpRequest;
@@ -43,10 +45,14 @@ public class JwtAuthenticationFilter {
     private static final Pattern PUBLIC_OAUTH =
             Pattern.compile("^/api/auth/(42|google|facebook)(/callback)?$");
 
-    private final JwtService jwtService;
+    private static final String ADMIN_PREFIX = "/api/admin/";
 
-    public JwtAuthenticationFilter(JwtService jwtService) {
+    private final JwtService jwtService;
+    private final UserDao userDao;
+
+    public JwtAuthenticationFilter(JwtService jwtService, UserDao userDao) {
         this.jwtService = jwtService;
+        this.userDao = userDao;
     }
 
     public HttpResponse<?> authenticate(HttpRequest<?> request) {
@@ -59,6 +65,21 @@ public class JwtAuthenticationFilter {
             return HttpResponse.status(HttpStatus.UNAUTHORIZED)
                     .header(HttpHeaders.WWW_AUTHENTICATE, "Bearer")
                     .body(ErrorResponse.of("You must be signed in."));
+        }
+
+        // Checked on every call, not just at sign-in, so a freeze takes effect immediately
+        // instead of when the current access token expires.
+        UserDao.Access access = userDao.findAccess(userId).orElse(null);
+        if (access == null) {
+            return HttpResponse.status(HttpStatus.UNAUTHORIZED)
+                    .header(HttpHeaders.WWW_AUTHENTICATE, "Bearer")
+                    .body(ErrorResponse.of("You must be signed in."));
+        }
+        if (!access.active()) {
+            return HttpResponse.status(HttpStatus.FORBIDDEN).body(ErrorResponse.of(TokenService.FROZEN_MESSAGE));
+        }
+        if (request.getPath().startsWith(ADMIN_PREFIX) && !access.admin()) {
+            return HttpResponse.status(HttpStatus.FORBIDDEN).body(ErrorResponse.of("Administrators only."));
         }
 
         request.setAttribute(USER_ID_ATTRIBUTE, userId);

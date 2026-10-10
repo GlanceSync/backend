@@ -79,6 +79,10 @@ public class AuthService {
                     "Please confirm your email address first. We sent you a link when you signed up.");
         }
 
+        if (!user.active()) {
+            throw new ApiException(HttpStatus.FORBIDDEN, TokenService.FROZEN_MESSAGE);
+        }
+
         userDao.touchLastSeen(user.id());
         return user;
     }

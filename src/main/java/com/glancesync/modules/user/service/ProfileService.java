@@ -79,6 +79,9 @@ public class ProfileService {
         }
         User self = get(selfId);
         User other = get(userId);
+        if (!other.active()) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "That person no longer exists.");
+        }
         viewService.record(self, userId);
 
         LikeStatus likes = likeService.status(selfId, userId);
