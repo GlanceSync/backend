@@ -14,9 +14,9 @@ import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import com.nimbusds.oauth2.sdk.id.ClientID;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.session.Session;
+import com.glancesync.web.Nullable;
+import com.glancesync.web.HttpStatus;
+import com.glancesync.web.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

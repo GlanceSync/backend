@@ -8,11 +8,9 @@ import com.glancesync.modules.realtime.service.PresenceRegistry;
 import com.glancesync.modules.user.dto.MapUserResponse;
 import com.glancesync.modules.user.entity.MapUser;
 import com.glancesync.modules.user.repo.UserDao;
-import io.micronaut.http.HttpStatus;
-import jakarta.inject.Singleton;
+import com.glancesync.web.HttpStatus;
 
 /** Who to draw on the map for the part of it someone is looking at. */
-@Singleton
 public class MapService {
 
     /** A map zoomed out over a whole country would otherwise send everyone in it. */

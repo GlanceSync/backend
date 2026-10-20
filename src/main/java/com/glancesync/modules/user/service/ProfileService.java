@@ -3,6 +3,7 @@ package com.glancesync.modules.user.service;
 import java.util.UUID;
 import com.glancesync.common.exception.ApiException;
 import com.glancesync.common.geo.ApproximateDistance;
+import com.glancesync.modules.block.repo.BlockDao;
 import com.glancesync.modules.interest.entity.Interest;
 import com.glancesync.modules.interest.repo.InterestDao;
 import com.glancesync.modules.like.dto.LikeStatus;
@@ -19,15 +20,13 @@ import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.PictureDao;
 import com.glancesync.modules.user.repo.UserDao;
 import com.glancesync.modules.visit.service.ProfileViewService;
-import io.micronaut.http.HttpStatus;
-import jakarta.inject.Singleton;
+import com.glancesync.web.HttpStatus;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 
-@Singleton
 public class ProfileService {
 
     public static final int MAX_BIOGRAPHY_LENGTH = 1000;
@@ -44,15 +43,18 @@ public class ProfileService {
     private final LikeService likeService;
     private final ProfileViewService viewService;
     private final PresenceRegistry presence;
+    private final BlockDao blockDao;
 
     public ProfileService(UserDao userDao, PictureDao pictureDao, InterestDao interestDao, LikeService likeService,
-                          ProfileViewService viewService, PresenceRegistry presence) {
+                          ProfileViewService viewService, PresenceRegistry presence,
+                          BlockDao blockDao) {
         this.userDao = userDao;
         this.pictureDao = pictureDao;
         this.interestDao = interestDao;
         this.likeService = likeService;
         this.viewService = viewService;
         this.presence = presence;
+        this.blockDao = blockDao;
     }
 
     public User get(UUID userId) {
@@ -68,7 +70,7 @@ public class ProfileService {
                 interestNames(selfId), pictures(selfId),
                 self.birthDate(), self.latitude(), self.longitude(), self.locationAccuracyM(), self.locationSource(),
                 self.showOnMap(), self.profileCompleted(),
-                null, null, null, null, null);
+                null, null, null, null, null, null, null);
     }
 
     public ProfileResponse view(UUID selfId, UUID userId) {
@@ -77,6 +79,9 @@ public class ProfileService {
         }
         User self = get(selfId);
         User other = get(userId);
+        if (!other.active()) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "That person no longer exists.");
+        }
         viewService.record(self, userId);
 
         LikeStatus likes = likeService.status(selfId, userId);
@@ -86,7 +91,8 @@ public class ProfileService {
                 other.age(), other.city(), other.fameRating(), presence.isOnline(userId), other.lastSeenAt(),
                 interestNames(userId), pictures(userId),
                 null, null, null, null, null, null, null,
-                ApproximateDistance.km(meters), ApproximateDistance.label(meters), likes.likedByMe(), likes.likesMe(), likes.connected());
+                ApproximateDistance.km(meters), ApproximateDistance.label(meters), likes.likedByMe(), likes.likesMe(), likes.connected(),
+                blockDao.hasBlocked(selfId, userId), blockDao.hasBlocked(userId, selfId));
     }
 
     public ProfileResponse update(UUID selfId, ProfileRequest request) {

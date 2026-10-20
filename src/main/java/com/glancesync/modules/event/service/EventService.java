@@ -7,13 +7,11 @@ import com.glancesync.modules.event.entity.Event;
 import com.glancesync.modules.event.repo.EventDao;
 import com.glancesync.modules.notification.service.NotificationService;
 import com.glancesync.modules.user.repo.UserDao;
-import io.micronaut.http.HttpStatus;
-import jakarta.inject.Singleton;
+import com.glancesync.web.HttpStatus;
 
 import java.time.Instant;
 import java.util.List;
 
-@Singleton
 public class EventService {
 
     public static final String PENDING = "pending";

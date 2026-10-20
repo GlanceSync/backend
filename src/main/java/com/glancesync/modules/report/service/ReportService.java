@@ -5,12 +5,10 @@ import com.glancesync.common.exception.ApiException;
 import com.glancesync.modules.fame.service.FameService;
 import com.glancesync.modules.report.repo.ReportDao;
 import com.glancesync.modules.user.repo.UserDao;
-import io.micronaut.http.HttpStatus;
-import jakarta.inject.Singleton;
+import com.glancesync.web.HttpStatus;
 
 import java.util.Map;
 
-@Singleton
 public class ReportService {
 
     public static final int MAX_REASON_LENGTH = 500;

@@ -1,12 +1,9 @@
 package com.glancesync.modules.mail.config;
 
-import io.micronaut.context.annotation.ConfigurationProperties;
-
 /**
  * SMTP settings, bound from {@code glancesync.mail.*} in application.properties.
  * An empty host means "log emails instead of sending them" (local development).
  */
-@ConfigurationProperties("glancesync.mail")
 public class MailConfig {
 
     private String host = "";

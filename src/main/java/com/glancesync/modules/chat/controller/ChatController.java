@@ -5,11 +5,11 @@ import com.glancesync.common.exception.ApiException;
 import com.glancesync.modules.security.filter.JwtAuthenticationFilter;
 import com.glancesync.modules.chat.dto.ChatEntry;
 import com.glancesync.modules.chat.service.ChatService;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Get;
-import io.micronaut.http.annotation.PathVariable;
+import com.glancesync.web.HttpRequest;
+import com.glancesync.web.HttpStatus;
+import com.glancesync.web.annotation.Controller;
+import com.glancesync.web.annotation.Get;
+import com.glancesync.web.annotation.PathVariable;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;

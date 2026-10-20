@@ -3,13 +3,11 @@ package com.glancesync.modules.user.repo;
 import java.util.UUID;
 import com.glancesync.common.db.Database;
 import com.glancesync.modules.user.entity.Picture;
-import jakarta.inject.Singleton;
 
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 
-@Singleton
 public class PictureDao {
 
     /** Where a picture's bytes are: on disk ({@code contentType}) or on the internet ({@code externalUrl}). */

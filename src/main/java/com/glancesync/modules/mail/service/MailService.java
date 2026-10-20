@@ -1,9 +1,6 @@
 package com.glancesync.modules.mail.service;
 
 import com.glancesync.modules.mail.config.MailConfig;
-import io.micronaut.scheduling.TaskExecutors;
-import jakarta.inject.Named;
-import jakarta.inject.Singleton;
 import jakarta.mail.Authenticator;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
@@ -25,7 +22,6 @@ import java.util.concurrent.ExecutorService;
  * response. With no SMTP host configured (local development) the message is written
  * to the log instead.
  */
-@Singleton
 public class MailService {
 
     private static final Logger LOG = LoggerFactory.getLogger(MailService.class);
@@ -34,7 +30,7 @@ public class MailService {
     private final Session session;
     private final String from;
 
-    public MailService(@Named(TaskExecutors.IO) ExecutorService executor, MailConfig config) {
+    public MailService(ExecutorService executor, MailConfig config) {
         this.executor = executor;
         this.from = config.getFrom();
         this.session = config.isEnabled() ? buildSession(config) : null;

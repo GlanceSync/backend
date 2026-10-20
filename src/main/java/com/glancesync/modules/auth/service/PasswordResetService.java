@@ -9,15 +9,13 @@ import com.glancesync.modules.security.service.PasswordHasher;
 import com.glancesync.modules.security.service.SecureTokens;
 import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.UserDao;
-import io.micronaut.context.annotation.Value;
-import io.micronaut.http.HttpStatus;
-import jakarta.inject.Singleton;
+import com.glancesync.web.Value;
+import com.glancesync.web.HttpStatus;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 
-@Singleton
 public class PasswordResetService {
 
     private static final int RESEND_COOLDOWN_SECONDS = 60;

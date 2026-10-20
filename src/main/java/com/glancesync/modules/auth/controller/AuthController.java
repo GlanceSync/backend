@@ -1,6 +1,5 @@
 package com.glancesync.modules.auth.controller;
 
-import com.glancesync.common.dto.ErrorResponse;
 import com.glancesync.common.exception.ApiException;
 import com.glancesync.modules.auth.dto.AuthResponse;
 import com.glancesync.modules.auth.dto.ForgotPasswordRequest;
@@ -19,16 +18,16 @@ import com.glancesync.modules.security.service.RefreshTokenCookieService;
 import com.glancesync.modules.user.dto.UserResponse;
 import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.UserDao;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.MediaType;
-import io.micronaut.http.annotation.Body;
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Get;
-import io.micronaut.http.annotation.Post;
-import io.micronaut.http.annotation.QueryValue;
-import io.micronaut.core.annotation.Nullable;
+import com.glancesync.web.HttpRequest;
+import com.glancesync.web.HttpResponse;
+import com.glancesync.web.HttpStatus;
+import com.glancesync.web.MediaType;
+import com.glancesync.web.annotation.Body;
+import com.glancesync.web.annotation.Controller;
+import com.glancesync.web.annotation.Get;
+import com.glancesync.web.annotation.Post;
+import com.glancesync.web.annotation.QueryValue;
+import com.glancesync.web.Nullable;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.net.URI;
@@ -111,9 +110,7 @@ public class AuthController {
         return refreshCookie.extract(request)
                 .flatMap(tokenService::refresh)
                 .<HttpResponse<?>>map(this::withTokens)
-                .orElseGet(() -> HttpResponse.status(HttpStatus.UNAUTHORIZED)
-                        .cookie(refreshCookie.buildExpired())
-                        .body(ErrorResponse.of("Your session has expired. Please sign in again.")));
+                .orElseGet(() -> HttpResponse.noContent().cookie(refreshCookie.buildExpired()));
     }
 
     @Post("/logout")
@@ -127,6 +124,7 @@ public class AuthController {
         UserResponse user = JwtAuthenticationFilter.bearerToken(request)
                 .flatMap(jwtService::parseAccessToken)
                 .flatMap(userDao::findById)
+                .filter(User::active)
                 .map(UserResponse::of)
                 .orElse(null);
         return new SessionResponse(user);

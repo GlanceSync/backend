@@ -5,10 +5,10 @@ import com.glancesync.common.exception.ApiException;
 import com.glancesync.modules.security.filter.JwtAuthenticationFilter;
 import com.glancesync.modules.user.dto.ActivityResponse;
 import com.glancesync.modules.visit.service.ProfileViewService;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Get;
+import com.glancesync.web.HttpRequest;
+import com.glancesync.web.HttpStatus;
+import com.glancesync.web.annotation.Controller;
+import com.glancesync.web.annotation.Get;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;

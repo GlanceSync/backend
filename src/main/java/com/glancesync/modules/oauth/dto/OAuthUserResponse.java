@@ -1,6 +1,6 @@
 package com.glancesync.modules.oauth.dto;
 
-import io.micronaut.core.annotation.Nullable;
+import com.glancesync.web.Nullable;
 
 public record OAuthUserResponse(String providerId, @Nullable String username, @Nullable String email,
                                 boolean emailVerified, @Nullable String firstName, @Nullable String lastName,

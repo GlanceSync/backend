@@ -7,9 +7,8 @@ import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.PictureDao;
 import com.glancesync.modules.user.repo.UserDao;
 import com.glancesync.modules.user.storage.PictureStorage;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.MediaType;
-import jakarta.inject.Singleton;
+import com.glancesync.web.HttpStatus;
+import com.glancesync.web.MediaType;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,7 +20,6 @@ import java.util.Optional;
  * by {@link PictureStorage}; a picture can also point at an image on the internet (the seed
  * data does), which is served as a redirect.
  */
-@Singleton
 public class PictureService {
 
     public static final int MAX_PER_USER = 5;

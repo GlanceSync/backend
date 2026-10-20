@@ -6,13 +6,11 @@ import com.glancesync.modules.auth.dto.RegisterRequest;
 import com.glancesync.modules.security.service.PasswordHasher;
 import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.UserDao;
-import io.micronaut.http.HttpStatus;
-import jakarta.inject.Singleton;
+import com.glancesync.web.HttpStatus;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@Singleton
 public class AuthService {
 
     private final UserDao userDao;
@@ -79,6 +77,10 @@ public class AuthService {
         if (!user.emailVerified()) {
             throw new ApiException(HttpStatus.FORBIDDEN,
                     "Please confirm your email address first. We sent you a link when you signed up.");
+        }
+
+        if (!user.active()) {
+            throw new ApiException(HttpStatus.FORBIDDEN, TokenService.FROZEN_MESSAGE);
         }
 
         userDao.touchLastSeen(user.id());

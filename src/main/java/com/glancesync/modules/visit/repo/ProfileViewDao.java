@@ -4,14 +4,12 @@ import java.util.UUID;
 import com.glancesync.common.db.Database;
 import com.glancesync.modules.user.dto.ActivityResponse;
 import com.glancesync.modules.user.entity.User;
-import jakarta.inject.Singleton;
 
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-@Singleton
 public class ProfileViewDao {
 
     private final Database database;

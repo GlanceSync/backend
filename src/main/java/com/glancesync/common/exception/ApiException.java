@@ -1,6 +1,6 @@
 package com.glancesync.common.exception;
 
-import io.micronaut.http.HttpStatus;
+import com.glancesync.web.HttpStatus;
 
 import java.util.Map;
 

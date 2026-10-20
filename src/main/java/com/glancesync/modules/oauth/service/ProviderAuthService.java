@@ -2,8 +2,8 @@ package com.glancesync.modules.oauth.service;
 
 import com.glancesync.modules.oauth.dto.OAuthUserResponse;
 import com.glancesync.modules.oauth.enums.AuthProvider;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.session.Session;
+import com.glancesync.web.Nullable;
+import com.glancesync.web.Session;
 
 import java.net.URI;
 

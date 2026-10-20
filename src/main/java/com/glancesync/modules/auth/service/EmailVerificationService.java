@@ -7,14 +7,12 @@ import com.glancesync.modules.mail.service.AccountMails;
 import com.glancesync.modules.security.service.SecureTokens;
 import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.UserDao;
-import io.micronaut.context.annotation.Value;
-import jakarta.inject.Singleton;
+import com.glancesync.web.Value;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 
-@Singleton
 public class EmailVerificationService {
 
     private static final int RESEND_COOLDOWN_SECONDS = 60;

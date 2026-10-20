@@ -3,13 +3,11 @@ package com.glancesync.modules.discovery.repo;
 import java.util.UUID;
 import com.glancesync.common.db.Database;
 import com.glancesync.modules.discovery.entity.DiscoveryPreferences;
-import jakarta.inject.Singleton;
 
 import java.sql.Array;
 import java.util.List;
 import java.util.Optional;
 
-@Singleton
 public class DiscoveryPreferencesDao {
 
     private final Database database;

@@ -7,14 +7,12 @@ import com.glancesync.modules.notification.service.NotificationService;
 import com.glancesync.modules.user.dto.ActivityResponse;
 import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.visit.repo.ProfileViewDao;
-import jakarta.inject.Singleton;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-@Singleton
 public class ProfileViewService {
 
     private static final Duration NOTIFY_AGAIN_AFTER = Duration.ofHours(1);

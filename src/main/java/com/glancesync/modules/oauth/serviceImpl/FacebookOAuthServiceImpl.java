@@ -9,17 +9,15 @@ import com.nimbusds.oauth2.sdk.Scope;
 import com.nimbusds.oauth2.sdk.id.ClientID;
 import com.nimbusds.oauth2.sdk.id.State;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
-import io.micronaut.context.annotation.Value;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.session.Session;
-import jakarta.inject.Singleton;
+import com.glancesync.web.Value;
+import com.glancesync.web.Nullable;
+import com.glancesync.web.Session;
 
 import java.net.URI;
 import java.util.Map;
 
 import static com.glancesync.modules.oauth.serviceImpl.OAuthRequests.string;
 
-@Singleton
 public class FacebookOAuthServiceImpl implements ProviderAuthService {
 
     private static final String STATE_SESSION_KEY = "oauth2_facebook_state";

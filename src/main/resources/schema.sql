@@ -36,7 +36,12 @@ CREATE TABLE IF NOT EXISTS users (
 
     -- True once gender, birth date, biography, a profile picture, a location and at least
     -- one interest are all set. Kept up to date by UserDao.refreshProfileCompleted.
-    profile_completed BOOLEAN      NOT NULL DEFAULT false
+    profile_completed BOOLEAN      NOT NULL DEFAULT false,
+
+    -- user | admin. Administrators review fake-account reports and can freeze accounts.
+    role              VARCHAR(8)   NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
+    -- False once an administrator freezes the account: it cannot sign in and is hidden from everyone.
+    is_active         BOOLEAN      NOT NULL DEFAULT true
 );
 
 -- Added after the table first shipped, so existing databases pick them up too.

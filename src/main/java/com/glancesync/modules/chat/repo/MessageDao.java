@@ -3,7 +3,6 @@ package com.glancesync.modules.chat.repo;
 import java.util.UUID;
 import com.glancesync.common.db.Database;
 import com.glancesync.modules.chat.entity.Message;
-import jakarta.inject.Singleton;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -17,7 +16,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Singleton
 public class MessageDao {
 
     private static final String COLUMNS =

@@ -3,7 +3,6 @@ package com.glancesync.modules.call.repo;
 import java.util.UUID;
 import com.glancesync.common.db.Database;
 import com.glancesync.modules.call.entity.CallRecord;
-import jakarta.inject.Singleton;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -12,7 +11,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-@Singleton
 public class CallDao {
 
     private static final String COLUMNS =

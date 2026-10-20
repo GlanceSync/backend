@@ -13,8 +13,8 @@ run by pm2. nginx sits in front of both.
      postgres :5440
 ```
 
-`/api` and `/ws` must be served from the same origin as the app, or the session
-cookie will not be sent with them — the WebSocket authenticates from that cookie.
+`/api` and `/ws` should be served from the same origin as the app. The WebSocket
+authenticates its handshake with the same short-lived access token as before.
 
 ## GitHub secrets
 

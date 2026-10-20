@@ -1,6 +1,5 @@
 package com.glancesync.common.db;
 
-import jakarta.inject.Singleton;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -18,7 +17,6 @@ import java.util.UUID;
  * A thin hand-rolled query helper over JDBC. No ORM: every statement is written by hand
  * and every value is bound as a parameter, so user input never reaches the SQL text.
  */
-@Singleton
 public class Database {
 
     private final DataSource dataSource;

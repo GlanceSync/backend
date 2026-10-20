@@ -9,15 +9,13 @@ import com.glancesync.modules.chat.entity.Message;
 import com.glancesync.modules.chat.repo.MessageDao;
 import com.glancesync.modules.like.service.LikeService;
 import com.glancesync.modules.user.repo.UserDao;
-import io.micronaut.http.HttpStatus;
-import jakarta.inject.Singleton;
+import com.glancesync.web.HttpStatus;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-@Singleton
 public class ChatService {
 
     /** Long enough for a real message, short enough to keep a row sane. */

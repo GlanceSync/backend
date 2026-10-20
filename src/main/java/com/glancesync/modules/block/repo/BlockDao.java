@@ -2,12 +2,10 @@ package com.glancesync.modules.block.repo;
 
 import java.util.UUID;
 import com.glancesync.common.db.Database;
-import jakarta.inject.Singleton;
 
 import java.util.List;
 import java.util.Set;
 
-@Singleton
 public class BlockDao {
 
     private final Database database;
@@ -36,6 +34,14 @@ public class BlockDao {
                         + "OR (blocker_id = ? AND blocked_id = ?)",
                 rs -> true,
                 userA, userB, userB, userA).isPresent();
+    }
+
+    /** True when {@code blockerId} has blocked {@code blockedId}; one direction only. */
+    public boolean hasBlocked(UUID blockerId, UUID blockedId) {
+        return database.queryOne(
+                "SELECT 1 FROM blocks WHERE blocker_id = ? AND blocked_id = ?",
+                rs -> true,
+                blockerId, blockedId).isPresent();
     }
 
     /** Everyone this user has blocked. */

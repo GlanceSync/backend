@@ -5,10 +5,8 @@ import com.glancesync.common.exception.ApiException;
 import com.glancesync.modules.block.repo.BlockDao;
 import com.glancesync.modules.notification.service.NotificationService;
 import com.glancesync.modules.user.repo.UserDao;
-import io.micronaut.http.HttpStatus;
-import jakarta.inject.Singleton;
+import com.glancesync.web.HttpStatus;
 
-@Singleton
 public class BlockService {
 
     private final BlockDao blockDao;

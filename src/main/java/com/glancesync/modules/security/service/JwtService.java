@@ -7,8 +7,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import io.micronaut.context.annotation.Value;
-import jakarta.inject.Singleton;
+import com.glancesync.web.Value;
 
 import javax.crypto.SecretKey;
 import java.time.Duration;
@@ -21,7 +20,6 @@ import java.util.Optional;
  * the Authorization header; the refresh token lives in an HttpOnly cookie and is only
  * good for getting a new pair. A "type" claim keeps one from being used as the other.
  */
-@Singleton
 public class JwtService {
 
     private static final String TYPE_CLAIM = "type";

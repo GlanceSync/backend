@@ -2,11 +2,9 @@ package com.glancesync.modules.oauth.repo;
 
 import java.util.UUID;
 import com.glancesync.common.db.Database;
-import jakarta.inject.Singleton;
 
 import java.util.Optional;
 
-@Singleton
 public class OAuthAccountDao {
 
     private final Database database;

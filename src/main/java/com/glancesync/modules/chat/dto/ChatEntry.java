@@ -3,7 +3,6 @@ package com.glancesync.modules.chat.dto;
 import java.util.UUID;
 import com.glancesync.modules.call.entity.CallRecord;
 import com.glancesync.modules.chat.entity.Message;
-import io.micronaut.serde.annotation.Serdeable;
 
 import java.time.Instant;
 
@@ -13,7 +12,6 @@ import java.time.Instant;
  *
  * Ids are only unique within a kind, so a client keys on kind and id together.
  */
-@Serdeable
 public record ChatEntry(String kind, UUID id, UUID senderId, UUID recipientId,
                         String body, Instant createdAt, Instant readAt,
                         String callStatus, String callMode, Integer callDurationSeconds) {

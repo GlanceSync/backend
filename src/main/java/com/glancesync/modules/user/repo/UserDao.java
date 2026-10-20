@@ -5,9 +5,9 @@ import com.glancesync.common.db.Database;
 import com.glancesync.modules.user.enums.Gender;
 import com.glancesync.modules.user.enums.LocationSource;
 import com.glancesync.modules.user.enums.SexualPreference;
+import com.glancesync.modules.user.enums.UserRole;
 import com.glancesync.modules.user.entity.MapUser;
 import com.glancesync.modules.user.entity.User;
-import jakarta.inject.Singleton;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -17,14 +17,13 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-@Singleton
 public class UserDao {
 
     private static final String SELECT_USER =
             "SELECT id, username, email, first_name, last_name, password_hash, email_verified_at, "
                     + "created_at, last_seen_at, profile_picture_id, gender, sexual_preference, biography, birth_date, "
                     + "ST_Y(location::geometry) AS latitude, ST_X(location::geometry) AS longitude, city, location_source, location_updated_at, "
-                    + "location_accuracy_m, show_on_map, fame_rating, profile_completed FROM users ";
+                    + "location_accuracy_m, show_on_map, fame_rating, profile_completed, role, is_active FROM users ";
 
     private final Database database;
 
@@ -122,7 +121,7 @@ public class UserDao {
                         + "JOIN interests i ON i.id = mine.interest_id "
                         + "WHERE mine.user_id = me.id AND theirs.user_id = u.id ORDER BY i.name) AS common_interests "
                         + "FROM users me JOIN users u ON u.id <> me.id "
-                        + "WHERE me.id = ? AND u.profile_completed AND u.show_on_map AND u.location IS NOT NULL "
+                        + "WHERE me.id = ? AND u.profile_completed AND u.is_active AND u.show_on_map AND u.location IS NOT NULL "
                         + "AND u.location::geometry && ST_MakeEnvelope(?, ?, ?, ?, 4326) "
                         + "AND NOT EXISTS (SELECT 1 FROM blocks b "
                         + "WHERE (b.blocker_id = me.id AND b.blocked_id = u.id) "
@@ -167,6 +166,26 @@ public class UserDao {
                 "UPDATE users SET email_verified_at = COALESCE(email_verified_at, now()) WHERE id = ?", userId);
     }
 
+    /** What the request filter needs on every call: the account's role and whether it is active. */
+    public record Access(UserRole role, boolean active) {
+
+        public boolean admin() {
+            return role == UserRole.ADMIN;
+        }
+    }
+
+    public Optional<Access> findAccess(UUID userId) {
+        return database.queryOne(
+                "SELECT role, is_active FROM users WHERE id = ?",
+                rs -> new Access(UserRole.fromDb(rs.getString("role")), rs.getBoolean("is_active")),
+                userId);
+    }
+
+    /** Unfreezes (true) or freezes (false) an account; returns false when there is no such user. */
+    public boolean setActive(UUID userId, boolean active) {
+        return database.update("UPDATE users SET is_active = ? WHERE id = ?", active, userId) > 0;
+    }
+
     public void touchLastSeen(UUID userId) {
         database.update("UPDATE users SET last_seen_at = now() WHERE id = ?", userId);
     }
@@ -195,7 +214,9 @@ public class UserDao {
                 getNullableDouble(rs, "location_accuracy_m"),
                 rs.getBoolean("show_on_map"),
                 rs.getInt("fame_rating"),
-                rs.getBoolean("profile_completed"));
+                rs.getBoolean("profile_completed"),
+                UserRole.fromDb(rs.getString("role")),
+                rs.getBoolean("is_active"));
     }
 
     private static MapUser mapMapUser(ResultSet rs) throws SQLException {

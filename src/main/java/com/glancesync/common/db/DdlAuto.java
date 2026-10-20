@@ -31,10 +31,6 @@ public enum DdlAuto {
         return value;
     }
 
-    public boolean dropsOnStartup() {
-        return this == CREATE || this == CREATE_DROP;
-    }
-
     public static DdlAuto parse(String raw) {
         String wanted = raw == null ? "" : raw.trim().toLowerCase(Locale.ROOT);
         return Arrays.stream(values())

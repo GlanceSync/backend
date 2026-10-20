@@ -10,12 +10,10 @@ import com.glancesync.modules.notification.service.NotificationService;
 import com.glancesync.modules.user.dto.ActivityResponse;
 import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.UserDao;
-import io.micronaut.http.HttpStatus;
-import jakarta.inject.Singleton;
+import com.glancesync.web.HttpStatus;
 
 import java.util.List;
 
-@Singleton
 public class LikeService {
 
     private final LikeDao likeDao;

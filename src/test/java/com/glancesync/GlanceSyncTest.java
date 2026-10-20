@@ -1,22 +1,13 @@
 package com.glancesync;
 
-
-import io.micronaut.runtime.EmbeddedApplication;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import com.glancesync.common.config.AppConfig;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Assertions;
 
-import jakarta.inject.Inject;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@MicronautTest
 class GlanceSyncTest {
-
-    @Inject
-    EmbeddedApplication<?> application;
-
     @Test
-    void testItWorks() {
-        Assertions.assertTrue(application.isRunning());
+    void loadsSparkServerConfiguration() {
+        assertTrue(new AppConfig().getInt("server.port") > 0);
     }
-
 }

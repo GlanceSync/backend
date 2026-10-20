@@ -5,7 +5,7 @@
 # Replace "ubuntu" below if the deploy user is named differently.
 
 [Unit]
-Description=GlanceSync backend (Micronaut)
+Description=GlanceSync backend (Spark Java)
 After=network.target docker.service
 Wants=docker.service
 

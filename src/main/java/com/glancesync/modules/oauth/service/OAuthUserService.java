@@ -12,8 +12,7 @@ import com.glancesync.modules.user.repo.PictureDao;
 import com.glancesync.modules.user.repo.UserDao;
 import com.glancesync.modules.user.service.PictureService;
 import com.glancesync.modules.user.storage.PictureStorage;
-import io.micronaut.http.HttpStatus;
-import jakarta.inject.Singleton;
+import com.glancesync.web.HttpStatus;
 
 import java.security.SecureRandom;
 import java.util.regex.Pattern;
@@ -24,7 +23,6 @@ import java.util.regex.Pattern;
  * When it links to an existing user, that user's names, username and profile picture are
  * replaced with what the provider shares, and their password is removed.
  */
-@Singleton
 public class OAuthUserService {
 
     private static final Pattern EMAIL_PATTERN =

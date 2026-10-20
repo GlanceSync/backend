@@ -2,9 +2,7 @@ package com.glancesync.modules.report.repo;
 
 import java.util.UUID;
 import com.glancesync.common.db.Database;
-import jakarta.inject.Singleton;
 
-@Singleton
 public class ReportDao {
 
     private final Database database;

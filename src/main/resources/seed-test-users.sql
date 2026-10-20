@@ -3,6 +3,8 @@
 -- Every account's password is:  Glance2026!
 -- Sign in with the username. Emails are <username>@glancesync.test and are already verified.
 --
+-- Administrator:  admin / GlanceAdmin2026!  (opens on the Reports page)
+--
 -- The first 20 are hand-written and easy to remember (amina_k, youssef_b, salma_r, ...);
 -- newbie_f and newbie_m are deliberately incomplete, to test the "complete your profile" gate.
 -- The other 480 are generated: Moroccan names, 20 cities, ages 18-55, a mix of
@@ -10151,6 +10153,13 @@ INSERT INTO reports (reporter_id, reported_id, reason) VALUES
     ('00000000-0000-4000-8000-000000000436', '00000000-0000-4000-8000-000000000362', 'Seeded test report'),
     ('00000000-0000-4000-8000-000000000441', '00000000-0000-4000-8000-000000000092', 'Seeded test report'),
     ('00000000-0000-4000-8000-000000000456', '00000000-0000-4000-8000-000000000387', 'Seeded test report')
+ON CONFLICT DO NOTHING;
+
+-- Administrator ---------------------------------------------------------------------------
+-- Reviews fake-account reports and freezes accounts. Not a dating profile, so it is left out
+-- of the derived columns below (its email is not @glancesync.test).
+INSERT INTO users (username, email, first_name, last_name, password_hash, email_verified_at, role) VALUES
+    ('admin', 'admin@glancesync.local', 'Glance', 'Admin', '$2a$12$saex4fP3ZJgwE3CliS0fL.KXTgTAe0NIke0jzG7u.odZAwALOXipm', now(), 'admin')
 ON CONFLICT DO NOTHING;
 
 -- Derived columns, computed exactly as the app does --------------------------------------

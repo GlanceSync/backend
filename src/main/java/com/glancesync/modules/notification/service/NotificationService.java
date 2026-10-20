@@ -7,7 +7,6 @@ import com.glancesync.modules.notification.entity.Notification;
 import com.glancesync.modules.notification.repo.NotificationDao;
 import com.glancesync.modules.realtime.dto.RealtimeMessages;
 import com.glancesync.modules.realtime.service.RealtimePush;
-import jakarta.inject.Singleton;
 
 import java.util.List;
 import java.util.Set;
@@ -16,7 +15,6 @@ import java.util.Set;
  * Creates notifications and pushes them immediately. Every notification is stored
  * first, so a user who was offline still sees it when they next sign in.
  */
-@Singleton
 public class NotificationService {
 
     public static final String TYPE_MESSAGE = "message";

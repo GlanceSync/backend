@@ -10,17 +10,15 @@ import com.glancesync.modules.oauth.service.ProviderAuthService;
 import com.glancesync.modules.security.service.RefreshTokenCookieService;
 import com.glancesync.modules.user.dto.UserResponse;
 import com.glancesync.modules.user.entity.User;
-import io.micronaut.context.annotation.Value;
-import io.micronaut.core.annotation.Nullable;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Get;
-import io.micronaut.http.annotation.PathVariable;
-import io.micronaut.http.annotation.QueryValue;
-import io.micronaut.scheduling.TaskExecutors;
-import io.micronaut.scheduling.annotation.ExecuteOn;
-import io.micronaut.session.Session;
+import com.glancesync.web.Value;
+import com.glancesync.web.Nullable;
+import com.glancesync.web.HttpResponse;
+import com.glancesync.web.HttpStatus;
+import com.glancesync.web.annotation.Controller;
+import com.glancesync.web.annotation.Get;
+import com.glancesync.web.annotation.PathVariable;
+import com.glancesync.web.annotation.QueryValue;
+import com.glancesync.web.Session;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.net.URI;
@@ -41,7 +39,6 @@ import java.util.stream.Collectors;
  */
 @Tag(name = "OAuth")
 @Controller("/api/auth")
-@ExecuteOn(TaskExecutors.BLOCKING)
 public class OAuthController {
 
     /** Every ProviderAuthService bean, by the provider's key ("42", "google", "facebook"). */

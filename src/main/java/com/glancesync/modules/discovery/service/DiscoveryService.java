@@ -12,8 +12,7 @@ import com.glancesync.modules.discovery.repo.DiscoveryPreferencesDao;
 import com.glancesync.modules.realtime.service.PresenceRegistry;
 import com.glancesync.modules.user.entity.User;
 import com.glancesync.modules.user.repo.UserDao;
-import io.micronaut.http.HttpStatus;
-import jakarta.inject.Singleton;
+import com.glancesync.web.HttpStatus;
 
 import java.util.List;
 import java.util.Locale;
@@ -28,7 +27,6 @@ import java.util.Map;
  * {@value DiscoveryDao#SAME_AREA_KM} km or the same city), then by a match score that weighs
  * shared tags, fame and distance together.
  */
-@Singleton
 public class DiscoveryService {
 
     public static final int DEFAULT_LIMIT = 50;
@@ -38,6 +36,7 @@ public class DiscoveryService {
     private static final int MAX_TAGS = 10;
     private static final int MAX_CITY_LENGTH = 100;
     private static final double MAX_DISTANCE_KM = 20_000;
+    private static final String RECOMMENDED = "recommended";
 
     private final DiscoveryDao discoveryDao;
     private final DiscoveryPreferencesDao preferencesDao;
@@ -74,12 +73,13 @@ public class DiscoveryService {
      * for this request only. Nothing is saved here.
      */
     public List<DiscoveryCard> discover(UUID selfId, DiscoveryPreferences overrides, Integer limit, Integer offset) {
-        User viewer = requireUser(selfId);
-        if (!viewer.profileCompleted()) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "Complete your profile to discover people.");
-        }
+        User viewer = requireCompleteProfile(selfId);
         DiscoveryPreferences saved = preferences(selfId);
         DiscoveryPreferences criteria = normalise(saved.overriddenBy(normalise(overrides)));
+        // A missing sort falls back to the saved one; "recommended" asks for the default ranking instead.
+        if (isRecommended(overrides.sort())) {
+            criteria = criteria.withoutSort();
+        }
 
         if (criteria.distance() != null && !hasCoordinates(viewer)) {
             if (overrides.distance() != null) {
@@ -90,13 +90,37 @@ public class DiscoveryService {
             criteria = criteria.withoutDistance();
         }
 
-        DiscoveryFilters filters = toFilters(criteria, page(limit, offset));
+        return find(viewer, toFilters(criteria, true, page(limit, offset)));
+    }
+
+    /**
+     * Advanced search: only the criteria given, never the saved preferences, and people the
+     * viewer already liked are included. Gender and orientation still have to match both ways.
+     */
+    public List<DiscoveryCard> search(UUID selfId, DiscoveryPreferences criteria, Integer limit, Integer offset) {
+        User viewer = requireCompleteProfile(selfId);
+        DiscoveryPreferences normalised = normalise(criteria);
+        if (normalised.distance() != null && !hasCoordinates(viewer)) {
+            throw invalid("distance", "Share your location with coordinates to search by distance, or use a city.");
+        }
+        return find(viewer, toFilters(normalised, false, page(limit, offset)));
+    }
+
+    private List<DiscoveryCard> find(User viewer, DiscoveryFilters filters) {
         return discoveryDao.find(viewer, filters).stream()
-                .map(row -> new DiscoveryCard(row.id(), row.username(), row.avatarUrl(), row.gender(), row.age(),
-                        row.city(), ApproximateDistance.km(row.distanceMeters()),
-                        ApproximateDistance.label(row.distanceMeters()), row.fameRating(), row.commonTags(),
-                        presence.isOnline(row.id())))
+                .map(row -> new DiscoveryCard(row.id(), row.username(), row.firstName(), row.biography(),
+                        row.avatarUrl(), row.pictureUrls(), row.gender(), row.age(), row.city(),
+                        ApproximateDistance.km(row.distanceMeters()), ApproximateDistance.label(row.distanceMeters()),
+                        row.fameRating(), row.commonTags(), row.interests(), presence.isOnline(row.id())))
                 .toList();
+    }
+
+    private User requireCompleteProfile(UUID selfId) {
+        User viewer = requireUser(selfId);
+        if (!viewer.profileCompleted()) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Complete your profile to discover people.");
+        }
+        return viewer;
     }
 
     /** Validates and normalises the preferences, throwing an exception for any invalid field. */
@@ -171,18 +195,18 @@ public class DiscoveryService {
         return new Page(l, o);
     }
 
-    private static DiscoveryFilters toFilters(DiscoveryPreferences p, Page page) {
+    private static DiscoveryFilters toFilters(DiscoveryPreferences p, boolean excludeLiked, Page page) {
         DiscoverySort sort = parseSort(p.sort());
         boolean ascending = p.order() == null
                 ? sort == null || sort.ascendingByDefault()
                 : p.order().equals("asc");
         return new DiscoveryFilters(p.minAge(), p.maxAge(), p.minFame(), p.maxFame(), p.distance(), p.city(),
-                p.tags(), p.minCommonTags(), sort, ascending, page.limit(), page.offset());
+                p.tags(), p.minCommonTags(), sort, ascending, excludeLiked, page.limit(), page.offset());
     }
 
-    /** age | distance | fame | commonTags, case-insensitive. */
+    /** age | distance | fame | commonTags, case-insensitive; recommended (or nothing) is the default ranking. */
     private static DiscoverySort parseSort(String sort) {
-        if (sort == null || sort.isBlank()) {
+        if (sort == null || sort.isBlank() || isRecommended(sort)) {
             return null;
         }
         return switch (sort.trim().toLowerCase(Locale.ROOT)) {
@@ -190,8 +214,12 @@ public class DiscoveryService {
             case "distance" -> DiscoverySort.DISTANCE;
             case "fame" -> DiscoverySort.FAME;
             case "commontags", "common_tags", "tags" -> DiscoverySort.COMMON_TAGS;
-            default -> throw invalid("sort", "Sort by age, distance, fame or commonTags.");
+            default -> throw invalid("sort", "Sort by recommended, age, distance, fame or commonTags.");
         };
+    }
+
+    private static boolean isRecommended(String sort) {
+        return sort != null && sort.trim().equalsIgnoreCase(RECOMMENDED);
     }
 
     private static boolean hasCoordinates(User user) {

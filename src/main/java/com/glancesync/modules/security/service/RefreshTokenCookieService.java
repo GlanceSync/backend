@@ -1,10 +1,9 @@
 package com.glancesync.modules.security.service;
 
-import io.micronaut.context.annotation.Value;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.cookie.Cookie;
-import io.micronaut.http.cookie.SameSite;
-import jakarta.inject.Singleton;
+import com.glancesync.web.Value;
+import com.glancesync.web.HttpRequest;
+import com.glancesync.web.cookie.Cookie;
+import com.glancesync.web.cookie.SameSite;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -13,7 +12,6 @@ import java.util.Optional;
  * The refresh token's cookie. HttpOnly keeps it away from page scripts, and the path
  * means the browser only sends it to /api/auth (refresh, logout), never elsewhere.
  */
-@Singleton
 public class RefreshTokenCookieService {
 
     public static final String COOKIE_NAME = "refresh_token";
@@ -39,7 +37,7 @@ public class RefreshTokenCookieService {
     public Optional<String> extract(HttpRequest<?> request) {
         return request.getCookies()
                 .findCookie(COOKIE_NAME)
-                .map(Cookie::getValue)
+                .map(Cookie::value)
                 .filter(value -> !value.isBlank());
     }
 

@@ -1,7 +1,6 @@
 package com.glancesync.modules.auth.service;
 
 import com.glancesync.modules.auth.dto.RegisterRequest;
-import jakarta.inject.Singleton;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -20,7 +19,6 @@ import java.util.stream.Stream;
 /**
  * Validation rules for user credentials.
 */
-@Singleton
 public class CredentialRules {
 
     private static final Pattern USERNAME_PATTERN = Pattern.compile("^[A-Za-z0-9_]+$");

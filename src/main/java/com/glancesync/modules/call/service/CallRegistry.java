@@ -1,6 +1,5 @@
 package com.glancesync.modules.call.service;
 
-import jakarta.inject.Singleton;
 
 import java.util.Map;
 import java.util.Optional;
@@ -12,7 +11,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * does track who is in each call, so a third party cannot inject signalling into a
  * conversation they are not part of.
  */
-@Singleton
 public class CallRegistry {
 
     public record Call(String id, UUID callerId, UUID calleeId, String mode,
