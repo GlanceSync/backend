@@ -2,7 +2,7 @@ name: Build and Deploy
 
 on:
   push:
-    branches: [ feat/realtime-messaging ]
+    branches: [ main ]
     paths-ignore:
       - '**.md'
   workflow_dispatch: {}
@@ -51,8 +51,9 @@ jobs:
         env:
           SSHPASS: ${{ secrets.SSH_PASSWORD }}
         run: |
-          # Micronaut also leaves the unshaded *.jar.original next to the runnable jar.
-          JAR_FILE=$(find target -maxdepth 1 -name '*.jar' ! -name '*.original' | head -n 1)
+          # The shade plugin also leaves the thin original-*.jar next to the runnable jar.
+          JAR_FILE=target/GlanceSync-0.1.jar
+          test -f "$JAR_FILE"
           echo "Deploying $JAR_FILE"
           sshpass -e scp "$JAR_FILE" "${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:${{ env.REMOTE_DIR }}/app.jar"
 
