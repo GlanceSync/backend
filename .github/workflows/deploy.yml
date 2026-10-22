@@ -7,6 +7,11 @@ on:
       - '**.md'
   workflow_dispatch: {}
 
+# Two deploys at once would race on app.jar/previous.jar; let them run one after another.
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
